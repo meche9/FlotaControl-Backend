@@ -1,0 +1,12 @@
+model ClasificacionVehiculo {
+  idClasificacion   Int               @id @default(autoincrement()) @map("id_clasificacion")
+  idTipo            Int               @map("id_tipo")
+  nombreClasificacion String          @map("nombre_clasificacion") @db.VarChar(50)
+  activo            Boolean           @default(true)
+  
+  tipo              TipoVehiculo      @relation(fields: [idTipo], references: [idTipo], onDelete: Restrict)
+  vehiculos         Vehicle[]
+  matrizTarifas     MatrizTarifa[]
+
+  @@map("clasificaciones_vehiculos")
+}

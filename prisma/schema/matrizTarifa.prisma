@@ -1,0 +1,33 @@
+enum MatrizTipoCobro {
+  Por_Viaje_Fijo    @map("Por Viaje Fijo")
+  Por_Tonelada      @map("Por Tonelada")
+  Por_Kilometro     @map("Por Kilometro")
+  Por_Volumen_M3    @map("Por Volumen M3")
+}
+
+model MatrizTarifa {
+  idTarifa                Int                   @id @default(autoincrement()) @map("id_tarifa")
+  codigoTarifa            String?               @map("codigo_tarifa") @db.VarChar(30)
+  idCliente               Int?                  @map("id_cliente")
+  idRuta                  Int                   @map("id_ruta")
+  idClasificacionVehiculo Int?                  @map("id_clasificacion_vehiculo")
+  tipoCobro               MatrizTipoCobro       @default(Por_Viaje_Fijo) @map("tipo_cobro")
+  montoTarifa             Decimal               @map("monto_tarifa") @db.Decimal(12, 2)
+  montoMinimo             Decimal?              @default(0.00) @map("monto_minimo") @db.Decimal(12, 2)
+  moneda                  String                @default("USD") @db.VarChar(10)
+  fechaInicioVigencia     DateTime              @map("fecha_inicio_vigencia") @db.Date
+  fechaFinVigencia        DateTime?             @map("fecha_fin_vigencia") @db.Date
+  activo                  Boolean?              @default(true)
+  fechaCreacion           DateTime              @default(now()) @map("fecha_creacion")
+  fechaActualizacion      DateTime              @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  cliente                 Cliente?              @relation(fields: [idCliente], references: [idCliente], onDelete: Cascade, onUpdate: Restrict)
+  ruta                    Ruta                  @relation(fields: [idRuta], references: [idRuta], onDelete: Restrict, onUpdate: Restrict)
+  clasificacionVehiculo   ClasificacionVehiculo? @relation(fields: [idClasificacionVehiculo], references: [idClasificacion], onDelete: Restrict, onUpdate: Restrict)
+  
+  guiasViajes             GuiaViaje[]
+  matrizRecargos          MatrizRecargo[]
+
+  @@map("matriz_tarifas")
+}
+

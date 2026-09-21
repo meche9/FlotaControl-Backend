@@ -1,0 +1,24 @@
+
+enum GuiaRecargoEstado {
+  Pendiente
+  Procesado
+  Rechazado
+}
+model GuiaViajeRecargo {
+  idViajeRecargo        Int                 @id @default(autoincrement()) @map("id_viaje_recargo")
+  idOrden               Int                 @map("id_orden")
+  idRecargo             Int?                @map("id_recargo")
+  monto                 Decimal             @db.Decimal(12, 2)
+  estado                GuiaRecargoEstado   @default(Pendiente)
+  idProformaRecargo     Int?                @map("id_proforma_recargo")
+  observaciones         String?             @db.Text
+
+  fechaCreacion         DateTime            @default(now()) @map("fecha_creacion")
+  fechaActualizacion    DateTime            @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  orden                 GuiaViaje           @relation(fields: [idOrden], references: [idOrden], onDelete: Cascade, onUpdate: Cascade)
+  recargo               MatrizRecargo?      @relation(fields: [idRecargo], references: [idRecargo], onDelete: SetNull, onUpdate: Restrict)
+  proformaRecargo       ProformaRecargo?    @relation(fields: [idProformaRecargo], references: [idProformaRecargo], onDelete: SetNull, onUpdate: Restrict)
+
+  @@map("guias_viajes_recargos")
+}

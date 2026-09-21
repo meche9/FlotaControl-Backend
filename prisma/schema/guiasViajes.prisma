@@ -1,0 +1,58 @@
+enum GuiaFacturacion {
+  Sin_Facturar @map("Sin Facturar")
+  Facturado
+  Cobrado
+}
+
+enum GuiaOrdenEstado {
+  Programado
+  En_Planta_Origen  @map("En Planta Origen")
+  En_Ruta           @map("En Ruta")
+  En_Planta_Destino @map("En Planta Destino")
+  Entregado
+  Cancelado
+}
+
+
+model GuiaViaje {
+  idOrden                 Int                 @id @default(autoincrement()) @map("id_orden")
+  nroTransporte           String?             @unique @map("nro_transporte") @db.VarChar(30)
+  idCliente               Int                 @map("id_cliente")
+  idRuta                  Int                 @map("id_ruta")
+  idPuntoOrigen           Int                 @map("id_punto_origen")
+  idPuntoDestino          Int                 @map("id_punto_destino")
+  idTarifa                Int?                @map("id_tarifa")
+  idVehiculoMotriz        Int?                @map("id_vehiculo_motriz")
+  idAcoplado              Int?                @map("id_acoplado")
+  idConductor             Int?                @map("id_conductor")
+
+  fechaProgramadaCarga    DateTime            @map("fecha_programada_carga")
+  fechaSalidaReal         DateTime?           @map("fecha_salida_real")
+  fechaEntregaEstimada    DateTime            @map("fecha_entrega_estimada")
+  fechaEntregaReal        DateTime?           @map("fecha_entrega_real")
+
+  moneda                  String              @default("USD") @db.VarChar(10)
+  montoFleteCliente       Decimal             @map("monto_flete_cliente") @db.Decimal(12, 2)
+  montoAnticipoConductor  Decimal             @default(0.00) @map("monto_anticipo_conductor") @db.Decimal(12, 2)
+  estadoFacturacion       GuiaFacturacion     @default(Sin_Facturar) @map("estado_facturacion")
+  estadoOrden             GuiaOrdenEstado     @default(Programado) @map("estado_orden")
+  observaciones           String?             @db.Text
+
+  fechaCreacion           DateTime            @default(now()) @map("fecha_creacion")
+  fechaActualizacion      DateTime            @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  cliente                 Cliente             @relation(fields: [idCliente], references: [idCliente], onDelete: Restrict)
+  ruta                    Ruta                @relation(fields: [idRuta], references: [idRuta], onDelete: Restrict)
+  puntoOrigen             PuntoCargaDescarga  @relation("GuiaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: Restrict)
+  puntoDestino            PuntoCargaDescarga  @relation("GuiaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: Restrict)
+  tarifa                  MatrizTarifa?       @relation(fields: [idTarifa], references: [idTarifa], onDelete: SetNull)
+  vehiculoMotriz          Vehicle?            @relation("GuiaMotriz", fields: [idVehiculoMotriz], references: [idVehiculo], onDelete: Restrict)
+  acoplado                Vehicle?            @relation("GuiaAcoplado", fields: [idAcoplado], references: [idVehiculo], onDelete: Restrict)
+  conductor               Conductor?          @relation(fields: [idConductor], references: [idConductor], onDelete: Restrict)
+
+  proformaDetalles        ProformaDetalle[]
+  guiasViajesRecargos     GuiaViajeRecargo[]
+
+  @@map("guias_viajes")
+}
+

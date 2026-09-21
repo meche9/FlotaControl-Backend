@@ -1,0 +1,15 @@
+model HistorialEnganche {
+  idHistorial             Int       @id @default(autoincrement()) @map("id_historial")
+  idVehiculoMotriz        Int       @map("id_vehiculo_motriz")
+  idAcoplado              Int       @map("id_acoplado")
+  fechaEnganche           DateTime  @default(now()) @map("fecha_enganche")
+  fechaDesenganche        DateTime? @map("fecha_desenganche")
+  kilometrajeEnganche     Int?      @map("kilometraje_enganche")
+  kilometrajeDesenganche  Int?      @map("kilometraje_desenganche")
+  observaciones           String?   @db.VarChar(255)
+
+  vehiculoMotriz          Vehicle   @relation("MotrizEnganche", fields: [idVehiculoMotriz], references: [idVehiculo], onDelete: Restrict)
+  acoplado                Vehicle   @relation("AcopladoEnganche", fields: [idAcoplado], references: [idVehiculo], onDelete: Restrict)
+
+  @@map("historial_enganches")
+}

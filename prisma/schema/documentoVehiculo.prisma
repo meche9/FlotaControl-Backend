@@ -1,0 +1,20 @@
+
+
+model DocumentoVehiculo {
+  idDocumentoVehiculo Int               @id @default(autoincrement()) @map("id_documento_vehiculo")
+  idVehiculo          Int               @map("id_vehiculo")
+  idTipoDocumento     Int               @map("id_tipo_documento")
+  numeroDocumento     String?           @map("numero_documento") @db.VarChar(100)
+  fechaEmision        DateTime?         @map("fecha_emision") @db.Date
+  fechaVencimiento    DateTime          @map("fecha_vencimiento") @db.Date
+  archivoUrl          String?           @map("archivo_url") @db.VarChar(255)
+  estado              DocumentoEstado   @default(Vigente)
+  observaciones       String?           @db.Text
+  fechaCreacion       DateTime          @default(now()) @map("fecha_creacion")
+  fechaActualizacion  DateTime          @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  vehiculo            Vehicle           @relation(fields: [idVehiculo], references: [idVehiculo], onDelete: Cascade)
+  tipoDocumento       TipoDocumento     @relation(fields: [idTipoDocumento], references: [idTipoDocumento], onDelete: Restrict)
+
+  @@map("documentos_vehiculos")
+}

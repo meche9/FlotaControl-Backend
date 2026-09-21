@@ -1,0 +1,21 @@
+enum RecargoTipoCalculo {
+  Monto_Fijo      @map("Monto Fijo")
+  Porcentaje
+  Por_Hora        @map("Por Hora")
+}
+
+model MatrizRecargo {
+  idRecargo       Int                 @id @default(autoincrement()) @map("id_recargo")
+  idTarifa        Int                 @map("id_tarifa")
+  concepto        String              @db.VarChar(100)
+  tipoCalculo     RecargoTipoCalculo  @default(Monto_Fijo) @map("tipo_calculo")
+  valor           Decimal             @db.Decimal(10, 2)
+
+  tarifa          MatrizTarifa        @relation(fields: [idTarifa], references: [idTarifa], onDelete: Cascade, onUpdate: Restrict)
+  proformaRecargos ProformaRecargo[]
+  guiasRecargos   GuiaViajeRecargo[]
+
+  @@map("matriz_recargos")
+}
+
+

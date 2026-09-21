@@ -1,0 +1,10 @@
+model Role {
+  id        Int       @id @default(autoincrement())
+  nombre    String    @unique @db.VarChar(50)
+  descripcion String? @db.VarChar(255)
+  creadoEn  DateTime  @default(now()) @map("creado_en")
+
+  usuarios  Usuario[]
+
+  @@map("roles")
+}

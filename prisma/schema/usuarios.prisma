@@ -1,0 +1,25 @@
+enum UsuarioEstado {
+  activo
+  inactivo
+  suspendido
+}
+
+
+model Usuario {
+  id              Int           @id @default(autoincrement())
+  rolId           Int           @map("rol_id")
+  nombre          String        @db.VarChar(100)
+  apellido        String        @db.VarChar(100)
+  email           String        @unique @db.VarChar(150)
+  passwordHash    String        @map("password_hash") @db.VarChar(255)
+  telefono        String?       @db.VarChar(20)
+  estado          UsuarioEstado @default(activo)
+  ultimoAcceso    DateTime?     @map("ultimo_acceso")
+  creadoEn        DateTime      @default(now()) @map("creado_en")
+  actualizadoEn   DateTime      @default(now()) @updatedAt @map("actualizado_en")
+
+  rol             Role          @relation(fields: [rolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("usuarios")
+}
+

@@ -1,0 +1,33 @@
+enum TipoPunto {
+  Origen
+  Destino
+  Ambos
+}
+
+model PuntoCargaDescarga {
+  idPunto             Int             @id @default(autoincrement()) @map("id_punto")
+  idCliente           Int             @map("id_cliente")
+  nombreSede          String          @map("nombre_sede") @db.VarChar(100)
+  tipoPunto           TipoPunto       @default(Ambos) @map("tipo_punto")
+  direccion           String          @db.VarChar(255)
+  ciudad              String          @db.VarChar(100)
+  estado              String          @db.VarChar(100)
+  codigoPostal        String?         @map("codigo_postal") @db.VarChar(20)
+  contactoAlmacen     String?         @map("contacto_almacen") @db.VarChar(100)
+  telefonoAlmacen     String?         @map("telefono_almacen") @db.VarChar(30)
+  horarioAtencion     String?         @map("horario_atencion") @db.VarChar(100)
+  instruccionesAcceso String?         @map("instrucciones_acceso") @db.Text
+  activo              Boolean         @default(true)
+  fechaCreacion       DateTime        @default(now()) @map("fecha_creacion")
+  fechaActualizacion  DateTime        @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  cliente             Cliente         @relation(fields: [idCliente], references: [idCliente], onDelete: Cascade)
+  rutasOrigen         Ruta[]          @relation("RutaOrigen")
+  rutasDestino        Ruta[]          @relation("RutaDestino")
+  guiasOrigen         GuiaViaje[]     @relation("GuiaOrigen")
+  guiasDestino        GuiaViaje[]     @relation("GuiaDestino")
+
+  @@map("puntos_carga_descarga")
+}
+
+

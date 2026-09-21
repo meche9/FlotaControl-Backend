@@ -1,0 +1,20 @@
+
+enum RecargoAprobacion {
+  Aprobado
+  Aprobado_Parcial  @map("Aprobado Parcial")
+  Rechazado
+}
+
+model ProformaRecargo {
+  idProformaRecargo   Int                 @id @default(autoincrement()) @map("id_proforma_recargo")
+  idDetalle           Int                 @map("id_detalle")
+  idRecargo           Int?                @map("id_recargo")
+  montoTotalAprobado  Decimal             @map("monto_total_aprobado") @db.Decimal(10, 2)
+  estadoAprobacion    RecargoAprobacion   @default(Aprobado) @map("estado_aprobacion")
+
+  detalle             ProformaDetalle     @relation(fields: [idDetalle], references: [idDetalle], onDelete: Cascade)
+  recargo             MatrizRecargo?      @relation(fields: [idRecargo], references: [idRecargo], onDelete: SetNull)
+  guiasRecargos       GuiaViajeRecargo[]
+
+  @@map("proforma_recargos")
+}

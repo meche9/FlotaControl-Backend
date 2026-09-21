@@ -1,0 +1,34 @@
+enum ProformaEstado {
+  Borrador
+  Aprobada
+  Rechazada
+  Facturada
+}
+
+model Proforma {
+  idProforma          Int               @id @default(autoincrement()) @map("id_proforma")
+  nroProforma         String            @map("nro_proforma") @db.VarChar(50)
+  idCliente           Int               @map("id_cliente")
+  fechaFacturacion    DateTime          @map("fecha_facturacion") @db.Date
+  fechaDesdeViajes    DateTime          @map("fecha_desde_viajes") @db.Date
+  fechaHastaViajes    DateTime          @map("fecha_hasta_viajes") @db.Date
+  fechaRecepcion      DateTime          @default(now()) @map("fecha_recepcion")
+  moneda              String            @default("USD") @db.VarChar(10)
+  
+  montoFletes         Decimal           @default(0.00) @map("monto_fletes") @db.Decimal(12, 2)
+  montoRecargos       Decimal           @default(0.00) @map("monto_recargos") @db.Decimal(12, 2)
+  montoDescuentos     Decimal?          @default(0.00) @map("monto_descuentos") @db.Decimal(12, 2)
+  montoTotal          Decimal           @default(0.00) @map("monto_total") @db.Decimal(12, 2)
+  
+  estado              ProformaEstado    @default(Borrador)
+  observaciones       String?           @db.Text
+  
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  cliente             Cliente           @relation(fields: [idCliente], references: [idCliente])
+  detalles            ProformaDetalle[]
+
+  @@map("proformas")
+}
+

@@ -1,0 +1,18 @@
+model TipoDocumento {
+  idTipoDocumento     Int                  @id @default(autoincrement()) @map("id_tipo_documento")
+  nombreDocumento     String               @map("nombre_documento") @db.VarChar(100)
+  aplicaA             TipoDocumentoAplica  @map("aplica_a")
+  esObligatorio       Boolean              @default(true) @map("es_obligatorio")
+  activo              Boolean              @default(true)
+
+  documentosVehiculos DocumentoVehiculo[]
+  documentosConductores DocumentoConductor[]
+
+  @@map("tipos_documentos")
+}
+
+enum TipoDocumentoAplica {
+  Conductor
+  Vehiculo
+  Ambos
+}

@@ -1,0 +1,11 @@
+model HistorialTasaCambio {
+  idTasaCambio    BigInt    @id @default(autoincrement()) @map("id_tasa_cambio")
+  monedaOrigen    String    @map("moneda_origen") @db.VarChar(3)
+  monedaDestino   String    @map("moneda_destino") @db.VarChar(3)
+  tasa            Decimal   @db.Decimal(18, 6)
+  fechaTasa       DateTime  @map("fecha_tasa") @db.Date
+  fechaRegistro   DateTime  @default(now()) @map("fecha_registro")
+
+  @@unique([monedaOrigen, monedaDestino, fechaTasa], map: "UQ_historial_monedas_fecha")
+  @@map("historial_tasa_cambio")
+}

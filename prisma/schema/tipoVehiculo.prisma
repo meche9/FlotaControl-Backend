@@ -1,0 +1,8 @@
+model TipoVehiculo {
+  idTipo         Int                        @id @default(autoincrement()) @map("id_tipo")
+  nombreTipo     String                     @unique @map("nombre_tipo") @db.VarChar(50)
+  activo         Boolean                    @default(true)
+  clasificaciones ClasificacionVehiculo[]
+
+  @@map("tipos_vehiculos")
+}

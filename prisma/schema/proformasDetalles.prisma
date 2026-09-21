@@ -1,0 +1,16 @@
+model ProformaDetalle {
+  idDetalle               Int               @id @default(autoincrement()) @map("id_detalle")
+  idProforma              Int               @map("id_proforma")
+  idOrden                 Int               @unique @map("id_orden")
+  nroTransporte           Int               @map("nro_transporte")
+  montoFleteAprobado      Decimal           @map("monto_flete_aprobado") @db.Decimal(12, 2)
+  diferenciaFlete         Decimal?          @default(0.00) @map("diferencia_flete") @db.Decimal(12, 2)
+  totalRecargosAprobados  Decimal           @default(0.00) @map("total_recargos_aprobados") @db.Decimal(12, 2)
+  observacionViaje        String?           @map("observacion_viaje") @db.VarChar(255)
+
+  proforma                Proforma          @relation(fields: [idProforma], references: [idProforma], onDelete: Cascade)
+  orden                   GuiaViaje         @relation(fields: [idOrden], references: [idOrden])
+  recargos                ProformaRecargo[]
+
+  @@map("proforma_detalles")
+}

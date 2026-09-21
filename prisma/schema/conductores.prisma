@@ -1,0 +1,70 @@
+enum ConductorSexo {
+  M
+  F
+  Otro
+}
+
+enum ConductorEstadoCivil {
+  Soltero_a     @map("Soltero/a")
+  Casado_a      @map("Casado/a")
+  Divorciado_a  @map("Divorciado/a")
+  Viudo_a       @map("Viudo/a")
+  Concubinato
+}
+
+enum ConductorEstado {
+  Activo
+  En_Ruta       @map("En Ruta")
+  Vacaciones
+  Inactivo
+  Suspendido
+}
+
+model Conductor {
+  idConductor             Int             @id @default(autoincrement()) @map("id_conductor")
+  cedulaIdentidad         String          @unique @map("cedula_identidad") @db.VarChar(20)
+  nombres                 String          @db.VarChar(50)
+  apellidos               String          @db.VarChar(50)
+  fechaNacimiento         DateTime?       @map("fecha_nacimiento") @db.Date
+  sexo                    ConductorSexo?
+  nacionalidad            String?         @db.VarChar(50)
+  estadoCivil             ConductorEstadoCivil? @map("estado_civil")
+  cargaFamiliar           Int?            @default(0) @map("carga_familiar")
+  tipoSangre              String?         @map("tipo_sangre") @db.VarChar(5)
+  
+  telefono                String          @db.VarChar(20)
+  telefonoAuxiliar        String?         @map("telefono_auxiliar") @db.VarChar(20)
+  email                   String?         @unique @db.VarChar(100)
+  
+  direccion               String?         @db.VarChar(255)
+  urbBarrioParroquia      String?         @map("urb_barrio_parroquia") @db.VarChar(100)
+  avCalle                 String?         @map("av_calle") @db.VarChar(100)
+  edifCasa                String?         @map("edif_casa") @db.VarChar(100)
+  aptoPiso                String?         @map("apto_piso") @db.VarChar(50)
+  estadoCiudadMunicipio   String?         @map("estado_ciudad_municipio") @db.VarChar(150)
+  
+  personaContacto         String?         @map("persona_contacto") @db.VarChar(100)
+  telefonoContacto        String?         @map("telefono_contacto") @db.VarChar(20)
+  
+  tallaCamisa             String?         @map("talla_camisa") @db.VarChar(10)
+  tallaPantalon           String?         @map("talla_pantalon") @db.VarChar(10)
+  tallaChemise            String?         @map("talla_chemise") @db.VarChar(10)
+  tallaFranela            String?         @map("talla_franela") @db.VarChar(10)
+  tallaCalzado            String?         @map("talla_calzado") @db.VarChar(10)
+  
+  banco                   String?         @db.VarChar(100)
+  nroCuenta               String?         @map("nro_cuenta") @db.VarChar(30)
+  pagoMovil               String?         @map("pago_movil") @db.VarChar(30)
+  
+  estado                  ConductorEstado @default(Activo)
+  idVehiculoHabitual      Int?            @map("id_vehiculo_habitual")
+  vehiculoHabitual        Vehicle?        @relation(fields: [idVehiculoHabitual], references: [idVehiculo], onDelete: SetNull)
+  
+  fechaCreacion           DateTime        @default(now()) @map("fecha_creacion")
+  fechaActualizacion      DateTime        @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  documentosConductores   DocumentoConductor[]
+  guiasViajes             GuiaViaje[]
+
+  @@map("conductores")
+}

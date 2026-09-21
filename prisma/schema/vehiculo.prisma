@@ -1,0 +1,40 @@
+// prisma/schema/vehicle.prisma
+
+enum VehicleStatus {
+  Activo        @map("Activo")
+  En_Ruta       @map("En Ruta")
+  Mantenimiento @map("Mantenimiento")
+  Inactivo      @map("Inactivo")
+}
+
+model Vehicle {
+  idVehiculo         Int           @id @default(autoincrement()) @map("id_vehiculo")
+  idClasificacion    Int           @map("id_clasificacion")
+  placa              String        @unique @db.VarChar(15)
+  marca              String        @db.VarChar(50)
+  modelo             String?       @db.VarChar(50)
+  anio               Int           @db.Year
+  numeroChasis       String        @unique @db.VarChar(50) @map("numero_chasis")
+  numeroMotor        String?       @unique @db.VarChar(50) @map("numero_motor")
+  capacidadCarga     Decimal?      @db.Decimal(10, 2) @map("capacidad_carga")
+  capacidadArrastre  Decimal?      @db.Decimal(10, 2) @map("capacidad_arrastre")
+  estado             VehicleStatus @default(Activo) @map("estado")
+  idAcopladoActual   Int?          @unique @map("id_acoplado_actual")
+  fechaCreacion      DateTime      @default(now()) @map("fecha_creacion") @db.Timestamp()
+  fechaActualizacion DateTime      @updatedAt @map("fecha_actualizacion") @db.Timestamp()
+
+  // Relaciones
+  clasificacion        ClasificacionVehiculo @relation(fields: [idClasificacion], references: [idClasificacion], onDelete: Restrict, onUpdate: Restrict)
+  acopladoActual       Vehicle?              @relation("AcopladoAsignado", fields: [idAcopladoActual], references: [idVehiculo], onDelete: SetNull, onUpdate: Restrict)
+  vehiculosAcoplados   Vehicle[]             @relation("AcopladoAsignado")
+  documentosVehiculos  DocumentoVehiculo[]
+
+  // Relaciones inversas
+  conductoresHabituales Conductor[]         @relation()
+  guiasMotriz           GuiaViaje[]         @relation("GuiaMotriz")
+  guiasAcoplado         GuiaViaje[]         @relation("GuiaAcoplado")
+  enganchesMotriz       HistorialEnganche[] @relation("MotrizEnganche")
+  enganchesAcoplado     HistorialEnganche[] @relation("AcopladoEnganche")
+
+  @@map("vehiculos")
+}
