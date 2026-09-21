@@ -17,10 +17,20 @@ export class VehiculosController {
     return this.vehiculosService.findAll();
   }
 
+  
+ @Get('placa/:placa')
+  findOneByPlaca(@Param('placa') placa: string) {
+    return this.vehiculosService.findOneByPlaca(placa);
+  }
+
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.vehiculosService.findOne(id);
   }
+
+
+
 
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() updateVehicleDto: UpdateVehicleDto) {
