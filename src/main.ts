@@ -1,38 +1,16 @@
-import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
-import helmet from 'helmet';
+import { configurarApp } from './app.setup.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Prefijo global de API
-  app.setGlobalPrefix('api/v1');
+  // Prefijo, headers de seguridad, cookies, CORS y validación (ver app.setup.ts)
+  configurarApp(app);
+  app.enableShutdownHooks();
 
-  // Seguridad HTTP Headers (OWASP A05)
-  app.use(helmet());
-
-  // CORS configurado para el frontend (OWASP A05)
-  app.enableCors({
-    origin: [
-      'http://localhost:5173',  // Vite dev server
-      'http://localhost:4173',  // Vite preview
-    ],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    maxAge: 3600,
-  });
-
-  // Activa la validación global para todos los DTOs
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Elimina propiedades que no estén en el DTO
-      forbidNonWhitelisted: true, // Lanza error si envían propiedades no permitidas
-      transform: true, // Transforma los tipos automáticamente (ej. string a int en parámetros)
-    }),
-  );
-
-  await app.listen(3000);
+  await app.listen(app.get(ConfigService).get<number>('PORT') ?? 3000);
 }
-bootstrap();
+void bootstrap();

@@ -6,10 +6,10 @@ import {
   IsEnum, 
   IsNotEmpty, 
   MaxLength, 
-  MinLength 
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { UsuarioEstado } from '@prisma/client';
+import { IsStrongPassword } from '../../common/validators/password-policy.js';
 
 export class CreateUsuarioDto {
   @IsInt()
@@ -27,16 +27,16 @@ export class CreateUsuarioDto {
   @MaxLength(100)
   apellido: string;
 
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   @IsEmail()
   @IsNotEmpty()
   @MaxLength(150)
   email: string;
 
-  @IsString()
+  // Contraseña en claro: el servicio la guarda hasheada con bcrypt (nunca en texto plano)
   @IsNotEmpty()
-  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
-  @MaxLength(255)
-  passwordHash: string;
+  @IsStrongPassword()
+  password: string;
 
   @IsOptional()
   @IsString()
@@ -47,4 +47,3 @@ export class CreateUsuarioDto {
   @IsEnum(UsuarioEstado)
   estado?: UsuarioEstado;
 }
-

@@ -1,13 +1,13 @@
-import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsStrongPassword } from '../../common/validators/password-policy.js';
 
 export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty({ message: 'El token de restablecimiento es requerido' })
+  @Matches(/^[a-f0-9]{64}$/, { message: 'El enlace de restablecimiento es inválido o ha expirado' })
   token: string;
 
-  @IsString()
   @IsNotEmpty({ message: 'La nueva contraseña es requerida' })
-  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
-  @MaxLength(255)
+  @IsStrongPassword()
   newPassword: string;
 }

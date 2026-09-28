@@ -13,7 +13,10 @@ import {
 import { UsuariosService } from './usuarios.service.js';
 import { CreateUsuarioDto } from './dto/create-usuarios.dto.js';
 import { UpdateUsuarioDto } from './dto/update-usuarios.dto.js';
+import { Roles, ROLES_ADMINISTRACION } from '../auth/decorators/roles.decorator.js';
 
+// Gestión de usuarios: solo administradores (OWASP A01)
+@Roles(...ROLES_ADMINISTRACION)
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}

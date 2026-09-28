@@ -1,28 +1,37 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
-import { PrismaModule } from '../prisma/prisma.module.js';
+import { RolesGuard } from './guards/roles.guard.js';
+import { MailModule } from '../mail/mail.module.js';
+import { JWT_AUDIENCE, JWT_ISSUER } from '../config/constants.js';
 
 @Module({
   imports: [
-    PrismaModule,
-    ConfigModule,
+    MailModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('JWT_SECRET'),
+        // Algoritmo fijo en firma y verificación: evita ataques de "alg confusion"
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRATION', '1h'),
+          algorithm: 'HS256',
+          expiresIn: config.getOrThrow<number>('JWT_ACCESS_TTL_MINUTES') * 60,
+          issuer: JWT_ISSUER,
+          audience: JWT_AUDIENCE,
+        },
+        verifyOptions: {
+          algorithms: ['HS256'],
+          issuer: JWT_ISSUER,
+          audience: JWT_AUDIENCE,
         },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
-  exports: [AuthService, JwtAuthGuard, JwtModule],
+  providers: [AuthService, JwtAuthGuard, RolesGuard],
+  exports: [JwtModule, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}
