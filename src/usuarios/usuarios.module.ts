@@ -10,3 +10,6 @@ import { PrismaModule } from '../prisma/prisma.module.js';
   exports: [UsuariosService],
 })
 export class UsuariosModule {}
+
+
+

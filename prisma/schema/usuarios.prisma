@@ -19,6 +19,7 @@ model Usuario {
   actualizadoEn   DateTime      @default(now()) @updatedAt @map("actualizado_en")
 
   rol             Role          @relation(fields: [rolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  resetTokens     PasswordResetToken[]
 
   @@map("usuarios")
 }
