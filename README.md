@@ -1,3 +1,53 @@
+# FlotaControl - Backend
+
+API NestJS + Prisma (MySQL) del sistema FleetFlow.
+
+## Puesta en marcha
+
+```bash
+pnpm install
+cp .env.example .env        # completar DATABASE_URL, JWT_SECRET y SEED_ADMIN_*
+pnpm db:push                # crea/actualiza tablas (incluye refresh_tokens y usuarios.token_version)
+pnpm db:seed                # roles base + administrador inicial
+pnpm start:dev
+```
+
+> Los usuarios creados antes de este cambio tienen la contraseña guardada en texto plano y no podrán
+> iniciar sesión: use "¿Olvidó su contraseña?" o que un administrador les asigne una nueva
+> (`PATCH /api/v1/usuarios/:id` con `password`).
+
+## Autenticación y seguridad (OWASP Top 10)
+
+Todas las rutas requieren `Authorization: Bearer <accessToken>` salvo las marcadas con `@Public()`:
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/api/v1/auth/login` | Público (5/min por IP) | Devuelve `accessToken` (15 min) y deja el refresh token en la cookie httpOnly `ff_rt` |
+| POST | `/api/v1/auth/refresh` | Cookie + Origin permitido | Rota el refresh token y emite un nuevo access token |
+| POST | `/api/v1/auth/logout` | Cookie + Origin permitido | Revoca la sesión y borra la cookie |
+| POST | `/api/v1/auth/forgot-password` | Público (3/min por IP) | Envía el enlace de restablecimiento por correo (respuesta idéntica exista o no el email) |
+| POST | `/api/v1/auth/reset-password` | Público (5/min por IP) | Cambia la contraseña con el token del enlace y cierra todas las sesiones |
+| GET | `/api/v1/auth/profile` | Autenticado | Perfil del usuario |
+| * | `/api/v1/usuarios` | Rol Administrador / Super Admin | Gestión de usuarios |
+| * | `/api/v1/vehiculos`, `/api/v1/conductores` | Autenticado | CRUD |
+
+- **A01 Control de acceso**: guard JWT global + `@Roles()`; en cada petición se verifica en BD que el usuario siga activo y que su `tokenVersion` coincida (cambiar la contraseña invalida los tokens al instante). Los endpoints de cookie validan el `Origin` (CSRF).
+- **A02 Criptografía**: contraseñas con bcrypt (12 rondas); tokens de reset y refresh guardados solo como hash SHA-256; JWT HS256 con `iss`/`aud` y algoritmo fijo; `passwordHash` nunca sale de la API.
+- **A04/A07 Autenticación**: mensajes genéricos y tiempo constante (sin enumeración de usuarios), bloqueo de 15 min tras 5 intentos, rate limit por IP, política de contraseñas (8-64, mayúscula, minúscula, número y símbolo), refresh tokens opacos con rotación y detección de reutilización, expiración absoluta de sesión.
+- **A05 Configuración**: variables de entorno validadas al arrancar (la app no inicia con un `JWT_SECRET` débil), Helmet, CORS restringido por `CORS_ORIGINS`, `ValidationPipe` con whitelist.
+- **A09 Registro**: login fallido/exitoso, bloqueos, reutilización de tokens y restablecimientos se registran sin datos sensibles.
+
+En desarrollo sin `SMTP_HOST`, el enlace de restablecimiento se imprime en la consola del servidor (nunca en la respuesta HTTP).
+
+## Pruebas
+
+```bash
+pnpm test        # unitarias (AuthService y guards)
+pnpm test:e2e    # flujo HTTP completo de autenticación (sin necesidad de MySQL)
+```
+
+---
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
