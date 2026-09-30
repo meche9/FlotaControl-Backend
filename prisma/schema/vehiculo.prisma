@@ -6,9 +6,9 @@ enum VehicleStatus {
   Mantenimiento @map("Mantenimiento")
   Inactivo      @map("Inactivo")
 }
-
 model Vehicle {
-  idVehiculo         Int           @id @default(autoincrement()) @map("id_vehiculo")
+  // 1. Clave primaria ahora como UUID v4
+  idVehiculo         String        @id @default(uuid()) @map("id_vehiculo") @db.VarChar(36)
   idClasificacion    Int           @map("id_clasificacion")
   placa              String        @unique @db.VarChar(15)
   marca              String        @db.VarChar(50)
@@ -19,7 +19,10 @@ model Vehicle {
   capacidadCarga     Decimal?      @db.Decimal(10, 2) @map("capacidad_carga")
   capacidadArrastre  Decimal?      @db.Decimal(10, 2) @map("capacidad_arrastre")
   estado             VehicleStatus @default(Activo) @map("estado")
-  idAcopladoActual   Int?          @unique @map("id_acoplado_actual")
+
+  // 2. FK del acoplado asignado (auto-relación) convertida a UUID
+  idAcopladoActual   String?       @unique @map("id_acoplado_actual") @db.VarChar(36)
+
   fechaCreacion      DateTime      @default(now()) @map("fecha_creacion") @db.Timestamp()
   fechaActualizacion DateTime      @updatedAt @map("fecha_actualizacion") @db.Timestamp()
 

@@ -13,4 +13,5 @@ async function bootstrap() {
 
   await app.listen(app.get(ConfigService).get<number>('PORT') ?? 3000);
 }
+// FlotaControl Backend bootstrap - reloaded
 void bootstrap();

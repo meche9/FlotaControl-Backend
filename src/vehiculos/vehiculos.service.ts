@@ -42,7 +42,7 @@ export class VehiculosService {
   }
 
   //Buscar vehiculo por id
-  async findOne(id: number) {
+  async findOne(id: string) {
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { idVehiculo: id },
       include: {
@@ -60,7 +60,7 @@ export class VehiculosService {
 
 
   //Actualizar datos de un vehiculo
-  async update(id: number, updateVehicleDto: UpdateVehicleDto) {
+  async update(id: string, updateVehicleDto: UpdateVehicleDto) {
     // 1. Verificamos si el vehículo existe (lanza error 404 si no)
     await this.findOne(id);
 
@@ -75,7 +75,7 @@ export class VehiculosService {
 
 
   //Eliminar un vehiculo
-  async remove(id: number) {
+  async remove(id: string) {
     await this.findOne(id); // Verifica que exista
     return await this.prisma.vehicle.delete({
       where: { idVehiculo: id },

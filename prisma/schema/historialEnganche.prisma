@@ -1,7 +1,7 @@
 model HistorialEnganche {
   idHistorial             Int       @id @default(autoincrement()) @map("id_historial")
-  idVehiculoMotriz        Int       @map("id_vehiculo_motriz")
-  idAcoplado              Int       @map("id_acoplado")
+  idVehiculoMotriz        String    @map("id_vehiculo_motriz") @db.VarChar(36)
+  idAcoplado              String    @map("id_acoplado") @db.VarChar(36)
   fechaEnganche           DateTime  @default(now()) @map("fecha_enganche")
   fechaDesenganche        DateTime? @map("fecha_desenganche")
   kilometrajeEnganche     Int?      @map("kilometraje_enganche")

@@ -2,7 +2,7 @@
 
 model DocumentoVehiculo {
   idDocumentoVehiculo Int               @id @default(autoincrement()) @map("id_documento_vehiculo")
-  idVehiculo          Int               @map("id_vehiculo")
+  idVehiculo String @map("id_vehiculo") @db.VarChar(36)
   idTipoDocumento     Int               @map("id_tipo_documento")
   numeroDocumento     String?           @map("numero_documento") @db.VarChar(100)
   fechaEmision        DateTime?         @map("fecha_emision") @db.Date

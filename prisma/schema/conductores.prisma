@@ -57,7 +57,7 @@ model Conductor {
   pagoMovil               String?         @map("pago_movil") @db.VarChar(30)
   
   estado                  ConductorEstado @default(Activo)
-  idVehiculoHabitual      Int?            @map("id_vehiculo_habitual")
+  idVehiculoHabitual      String?         @map("id_vehiculo_habitual") @db.VarChar(36)
   vehiculoHabitual        Vehicle?        @relation(fields: [idVehiculoHabitual], references: [idVehiculo], onDelete: SetNull)
   
   fechaCreacion           DateTime        @default(now()) @map("fecha_creacion")

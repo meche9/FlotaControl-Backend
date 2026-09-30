@@ -7,7 +7,8 @@ import {
   IsEnum, 
   IsNotEmpty, 
   MaxLength, 
-  Min 
+  Min,
+  IsUUID
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ConductorSexo } from '@prisma/client';
@@ -158,7 +159,6 @@ export class CreateConductorDto {
   estado?: ConductorEstado;
 
   @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  idVehiculoHabitual?: number;
+  @IsUUID('4', { message: 'El idVehiculoHabitual debe ser un UUID v4 válido' })
+  idVehiculoHabitual?: string;
 }
