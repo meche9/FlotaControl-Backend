@@ -12,6 +12,7 @@ model Usuario {
   email         String        @unique @db.VarChar(150)
   passwordHash  String        @map("password_hash") @db.VarChar(255)
   telefono      String?       @db.VarChar(20)
+  foto          String?       @db.VarChar(64)
   estado        UsuarioEstado @default(activo)
   ultimoAcceso  DateTime?     @map("ultimo_acceso")
   // Se incrementa al cambiar/restablecer la contraseña: invalida todos los access tokens emitidos

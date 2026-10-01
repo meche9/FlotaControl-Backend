@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ImagenesService, type ArchivoImagen } from '../imagenes/imagenes.service.js';
 import { CreateVehicleDto } from '../vehiculos/dto/create-vehicle.dto.js';
 import { UpdateVehicleDto } from '../vehiculos/dto/update-vehicle.dto.js';
 
 @Injectable()
 export class VehiculosService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly imagenes: ImagenesService,
+  ) { }
 
 
 
@@ -76,9 +80,45 @@ export class VehiculosService {
 
   //Eliminar un vehiculo
   async remove(id: string) {
-    await this.findOne(id); // Verifica que exista
-    return await this.prisma.vehicle.delete({
+    const vehiculo = await this.findOne(id); // Verifica que exista
+    const eliminado = await this.prisma.vehicle.delete({
       where: { idVehiculo: id },
     });
+    await this.imagenes.eliminar('vehiculos', vehiculo.foto);
+    return eliminado;
+  }
+
+  async actualizarFoto(id: string, archivo: ArchivoImagen | undefined) {
+    const vehiculo = await this.findOne(id);
+    const foto = await this.imagenes.guardar('vehiculos', archivo);
+
+    try {
+      const actualizado = await this.prisma.vehicle.update({
+        where: { idVehiculo: id },
+        data: { foto },
+        include: { clasificacion: true },
+      });
+      await this.imagenes.eliminar('vehiculos', vehiculo.foto);
+      return actualizado;
+    } catch (error) {
+      await this.imagenes.eliminar('vehiculos', foto);
+      throw error;
+    }
+  }
+
+  async obtenerFoto(id: string) {
+    const vehiculo = await this.findOne(id);
+    return this.imagenes.obtener('vehiculos', vehiculo.foto);
+  }
+
+  async eliminarFoto(id: string) {
+    const vehiculo = await this.findOne(id);
+    const actualizado = await this.prisma.vehicle.update({
+      where: { idVehiculo: id },
+      data: { foto: null },
+      include: { clasificacion: true },
+    });
+    await this.imagenes.eliminar('vehiculos', vehiculo.foto);
+    return actualizado;
   }
 }

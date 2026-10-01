@@ -19,6 +19,7 @@ model Vehicle {
   capacidadCarga     Decimal?      @db.Decimal(10, 2) @map("capacidad_carga")
   capacidadArrastre  Decimal?      @db.Decimal(10, 2) @map("capacidad_arrastre")
   estado             VehicleStatus @default(Activo) @map("estado")
+  foto               String?       @db.VarChar(64)
 
   // 2. FK del acoplado asignado (auto-relación) convertida a UUID
   idAcopladoActual   String?       @unique @map("id_acoplado_actual") @db.VarChar(36)

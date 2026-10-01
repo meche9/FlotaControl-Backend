@@ -1,18 +1,28 @@
 import {
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Post,
+  Put,
   Req,
   Res,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
+import { createReadStream } from 'node:fs';
 import { AuthService, type SesionEmitida } from './auth.service.js';
+import { PerfilService } from './perfil.service.js';
+import { OPCIONES_SUBIDA_IMAGEN, type ArchivoImagen } from '../imagenes/imagenes.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
@@ -32,6 +42,7 @@ export class AuthController {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly perfilService: PerfilService,
     config: ConfigService,
   ) {
     this.allowedOrigins = new Set(parseOrigins(config.get<string>('CORS_ORIGINS')));
@@ -119,6 +130,27 @@ export class AuthController {
   @Get('profile')
   getProfile(@CurrentUser() user: AuthenticatedUser) {
     return this.authService.getProfile(user.id);
+  }
+
+  @Put('profile/foto')
+  @UseInterceptors(FileInterceptor('foto', OPCIONES_SUBIDA_IMAGEN))
+  subirFotoPerfil(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() archivo: ArchivoImagen | undefined,
+  ) {
+    return this.perfilService.actualizarFoto(user.id, archivo);
+  }
+
+  @Get('profile/foto')
+  @Header('Cache-Control', 'private, max-age=86400')
+  async obtenerFotoPerfil(@CurrentUser() user: AuthenticatedUser) {
+    const imagen = await this.perfilService.obtenerFoto(user.id);
+    return new StreamableFile(createReadStream(imagen.ruta), { type: imagen.tipo });
+  }
+
+  @Delete('profile/foto')
+  eliminarFotoPerfil(@CurrentUser() user: AuthenticatedUser) {
+    return this.perfilService.eliminarFoto(user.id);
   }
 
   private responderSesion(res: Response, sesion: SesionEmitida) {

@@ -26,6 +26,7 @@ export interface UsuarioPublico {
   apellido: string;
   email: string;
   telefono: string | null;
+  foto: string | null;
   estado: string;
   ultimoAcceso: Date | null;
   rol: { id: string; nombre: string; descripcion: string | null };
@@ -412,6 +413,7 @@ export class AuthService {
       apellido: usuario.apellido,
       email: usuario.email,
       telefono: usuario.telefono,
+      foto: usuario.foto,
       estado: usuario.estado,
       ultimoAcceso: usuario.ultimoAcceso,
       rol: {
