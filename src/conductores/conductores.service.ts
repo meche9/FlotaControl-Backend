@@ -31,7 +31,7 @@ constructor(private readonly prisma: PrismaService) {}
   }
 
   // 3. Buscar un conductor por su ID (Reutilizable para actualizar/eliminar)
-  async findOne(id: number) {
+  async findOne(id: string) {
     const conductor = await this.prisma.conductor.findUnique({
       where: { idConductor: id },
       include: {
@@ -63,7 +63,7 @@ constructor(private readonly prisma: PrismaService) {}
   }
 
   // 5. Actualizar un conductor
-  async update(id: number, updateConductorDto: UpdateConductorDto) {
+  async update(id: string, updateConductorDto: UpdateConductorDto) {
     // Verificamos que exista antes de actualizar (lanza 404 si no existe)
     await this.findOne(id);
 
@@ -74,7 +74,7 @@ constructor(private readonly prisma: PrismaService) {}
   }
 
   // 6. Eliminar un conductor
-  async remove(id: number) {
+  async remove(id: string) {
     // Verificamos que exista antes de eliminar
     await this.findOne(id);
 

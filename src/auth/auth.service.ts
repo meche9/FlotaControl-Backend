@@ -21,14 +21,14 @@ import type { AccessTokenPayload, ClientInfo } from './interfaces/auth.types.js'
 type UsuarioConRol = Prisma.UsuarioGetPayload<{ include: { rol: true } }>;
 
 export interface UsuarioPublico {
-  id: number;
+  id: string;
   nombre: string;
   apellido: string;
   email: string;
   telefono: string | null;
   estado: string;
   ultimoAcceso: Date | null;
-  rol: { id: number; nombre: string; descripcion: string | null };
+  rol: { id: string; nombre: string; descripcion: string | null };
 }
 
 export interface SesionEmitida {
@@ -285,7 +285,7 @@ export class AuthService {
   /**
    * Perfil del usuario autenticado (sin datos sensibles).
    */
-  async getProfile(userId: number): Promise<UsuarioPublico> {
+  async getProfile(userId: string): Promise<UsuarioPublico> {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: userId },
       include: { rol: true },

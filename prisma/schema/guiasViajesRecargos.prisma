@@ -5,12 +5,12 @@ enum GuiaRecargoEstado {
   Rechazado
 }
 model GuiaViajeRecargo {
-  idViajeRecargo        Int                 @id @default(autoincrement()) @map("id_viaje_recargo")
-  idOrden               Int                 @map("id_orden")
-  idRecargo             Int?                @map("id_recargo")
+  idViajeRecargo        String              @id @default(uuid()) @map("id_viaje_recargo") @db.VarChar(36)
+  idOrden               String              @map("id_orden") @db.VarChar(36)
+  idRecargo             String?             @map("id_recargo") @db.VarChar(36)
   monto                 Decimal             @db.Decimal(12, 2)
   estado                GuiaRecargoEstado   @default(Pendiente)
-  idProformaRecargo     Int?                @map("id_proforma_recargo")
+  idProformaRecargo     String?             @map("id_proforma_recargo") @db.VarChar(36)
   observaciones         String?             @db.Text
 
   fechaCreacion         DateTime            @default(now()) @map("fecha_creacion")

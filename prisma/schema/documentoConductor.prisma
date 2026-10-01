@@ -5,9 +5,9 @@ enum DocumentoEstado {
 }
 
 model DocumentoConductor {
-  idDocumentoConductor Int              @id @default(autoincrement()) @map("id_documento_conductor")
-  idConductor         Int               @map("id_conductor")
-  idTipoDocumento     Int               @map("id_tipo_documento")
+  idDocumentoConductor String           @id @default(uuid()) @map("id_documento_conductor") @db.VarChar(36)
+  idConductor         String            @map("id_conductor") @db.VarChar(36)
+  idTipoDocumento     String            @map("id_tipo_documento") @db.VarChar(36)
   numeroDocumento     String?           @map("numero_documento") @db.VarChar(100)
   fechaEmision        DateTime?         @map("fecha_emision") @db.Date
   fechaVencimiento    DateTime          @map("fecha_vencimiento") @db.Date

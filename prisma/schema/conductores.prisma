@@ -21,7 +21,7 @@ enum ConductorEstado {
 }
 
 model Conductor {
-  idConductor             Int             @id @default(autoincrement()) @map("id_conductor")
+  idConductor             String          @id @default(uuid()) @map("id_conductor") @db.VarChar(36)
   cedulaIdentidad         String          @unique @map("cedula_identidad") @db.VarChar(20)
   nombres                 String          @db.VarChar(50)
   apellidos               String          @db.VarChar(50)

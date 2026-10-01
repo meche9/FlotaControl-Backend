@@ -1,8 +1,12 @@
 // Prisma en memoria para pruebas unitarias del módulo de autenticación.
 // Implementa solo las operaciones que usan AuthService y JwtAuthGuard.
+import { randomUUID } from 'node:crypto';
 import { vi } from 'vitest';
 
 type Fila = Record<string, any>;
+
+export const ROL_ADMIN_ID = '6f1c2a3b-4d5e-4f60-8a71-92b3c4d5e6f7';
+export const ROL_OPERADOR_ID = '0a1b2c3d-4e5f-4a6b-9c7d-8e9f0a1b2c3d';
 
 function coincide(fila: Fila, where: Fila): boolean {
   return Object.entries(where).every(([campo, valor]) => {
@@ -24,10 +28,9 @@ function aplicar(fila: Fila, data: Fila): void {
 }
 
 export function crearPrismaFalso() {
-  let secuencia = 1;
   const roles: Fila[] = [
-    { id: 1, nombre: 'Administrador', descripcion: 'Acceso total', creadoEn: new Date() },
-    { id: 2, nombre: 'Operador', descripcion: null, creadoEn: new Date() },
+    { id: ROL_ADMIN_ID, nombre: 'Administrador', descripcion: 'Acceso total', creadoEn: new Date() },
+    { id: ROL_OPERADOR_ID, nombre: 'Operador', descripcion: null, creadoEn: new Date() },
   ];
   const usuarios: Fila[] = [];
   const refreshTokens: Fila[] = [];
@@ -51,7 +54,7 @@ export function crearPrismaFalso() {
     },
     refreshToken: {
       create: vi.fn(async ({ data }: { data: Fila }) => {
-        const fila = { id: secuencia++, revocadoEn: null, creadoEn: new Date(), ...data };
+        const fila = { id: randomUUID(), revocadoEn: null, creadoEn: new Date(), ...data };
         refreshTokens.push(fila);
         return { ...fila };
       }),
@@ -67,7 +70,7 @@ export function crearPrismaFalso() {
     },
     passwordResetToken: {
       create: vi.fn(async ({ data }: { data: Fila }) => {
-        const fila = { id: secuencia++, usado: false, creadoEn: new Date(), ...data };
+        const fila = { id: randomUUID(), usado: false, creadoEn: new Date(), ...data };
         resetTokens.push(fila);
         return { ...fila };
       }),
@@ -92,8 +95,8 @@ export function crearPrismaFalso() {
 
   const agregarUsuario = (datos: Partial<Fila> & { email: string; passwordHash: string }) => {
     const usuario = {
-      id: secuencia++,
-      rolId: 1,
+      id: randomUUID(),
+      rolId: ROL_ADMIN_ID,
       nombre: 'Mercedes',
       apellido: 'Ramírez',
       telefono: null,

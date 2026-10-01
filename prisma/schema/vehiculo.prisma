@@ -9,7 +9,7 @@ enum VehicleStatus {
 model Vehicle {
   // 1. Clave primaria ahora como UUID v4
   idVehiculo         String        @id @default(uuid()) @map("id_vehiculo") @db.VarChar(36)
-  idClasificacion    Int           @map("id_clasificacion")
+  idClasificacion    String        @map("id_clasificacion") @db.VarChar(36)
   placa              String        @unique @db.VarChar(15)
   marca              String        @db.VarChar(50)
   modelo             String?       @db.VarChar(50)

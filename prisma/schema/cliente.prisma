@@ -1,5 +1,5 @@
 model Cliente {
-  idCliente           Int                 @id @default(autoincrement()) @map("id_cliente")
+  idCliente           String              @id @default(uuid()) @map("id_cliente") @db.VarChar(36)
   razonSocial         String              @map("razon_social") @db.VarChar(150)
   nombreComercial     String?             @map("nombre_comercial") @db.VarChar(150)
   rif                 String              @unique @db.VarChar(30)

@@ -6,7 +6,7 @@ import {
   Patch, 
   Param, 
   Delete,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 
 import { ConductoresService } from './conductores.service.js';
@@ -33,17 +33,17 @@ export class ConductoresController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.conductoresService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateConductorDto: UpdateConductorDto) {
+  update(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() updateConductorDto: UpdateConductorDto) {
     return this.conductoresService.update(id, updateConductorDto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.conductoresService.remove(id);
   }
 }

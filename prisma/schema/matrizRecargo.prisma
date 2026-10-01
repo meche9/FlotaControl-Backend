@@ -5,8 +5,8 @@ enum RecargoTipoCalculo {
 }
 
 model MatrizRecargo {
-  idRecargo       Int                 @id @default(autoincrement()) @map("id_recargo")
-  idTarifa        Int                 @map("id_tarifa")
+  idRecargo       String              @id @default(uuid()) @map("id_recargo") @db.VarChar(36)
+  idTarifa        String              @map("id_tarifa") @db.VarChar(36)
   concepto        String              @db.VarChar(100)
   tipoCalculo     RecargoTipoCalculo  @default(Monto_Fijo) @map("tipo_calculo")
   valor           Decimal             @db.Decimal(10, 2)

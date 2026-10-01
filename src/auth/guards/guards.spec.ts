@@ -6,7 +6,7 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { RolesGuard } from './roles.guard.js';
 import { Public } from '../decorators/public.decorator.js';
 import { Roles } from '../decorators/roles.decorator.js';
-import { crearPrismaFalso } from '../../../test/utils/prisma-falso.js';
+import { crearPrismaFalso, ROL_ADMIN_ID } from '../../../test/utils/prisma-falso.js';
 import { JWT_AUDIENCE, JWT_ISSUER } from '../../config/constants.js';
 
 const SECRETO = 'secreto-de-pruebas-con-mas-de-32-caracteres';
@@ -33,7 +33,7 @@ describe('JwtAuthGuard', () => {
   let db: ReturnType<typeof crearPrismaFalso>;
   let jwt: JwtService;
   let guard: JwtAuthGuard;
-  let usuarioId: number;
+  let usuarioId: string;
 
   const firmar = (payload: object, secreto = SECRETO) =>
     jwt.signAsync(payload, { secret: secreto, expiresIn: 900, issuer: JWT_ISSUER, audience: JWT_AUDIENCE });
@@ -59,7 +59,7 @@ describe('JwtAuthGuard', () => {
   });
 
   it('acepta un access token válido y adjunta el usuario con su rol', async () => {
-    const token = await firmar({ sub: usuarioId, rolId: 1, ver: 0, typ: 'access' });
+    const token = await firmar({ sub: usuarioId, rolId: ROL_ADMIN_ID, ver: 0, typ: 'access' });
     const request: Record<string, any> = { headers: { authorization: `Bearer ${token}` } };
 
     await expect(guard.canActivate(contexto('protegida', request))).resolves.toBe(true);
@@ -71,8 +71,9 @@ describe('JwtAuthGuard', () => {
     ['tipo distinto de access', { typ: 'refresh' }, SECRETO],
     ['versión de credenciales desactualizada', { ver: 1 }, SECRETO],
     ['firma con otro secreto', {}, 'otro-secreto-de-pruebas-con-mas-de-32-caracteres'],
+    ['sub numérico del formato anterior', { sub: 1 }, SECRETO],
   ])('rechaza tokens con %s', async (_caso, cambios, secreto) => {
-    const token = await firmar({ sub: usuarioId, rolId: 1, ver: 0, typ: 'access', ...cambios }, secreto);
+    const token = await firmar({ sub: usuarioId, rolId: ROL_ADMIN_ID, ver: 0, typ: 'access', ...cambios }, secreto);
     const request = { headers: { authorization: `Bearer ${token}` } };
 
     await expect(guard.canActivate(contexto('protegida', request))).rejects.toBeInstanceOf(
@@ -81,7 +82,7 @@ describe('JwtAuthGuard', () => {
   });
 
   it('rechaza tokens de usuarios desactivados', async () => {
-    const token = await firmar({ sub: usuarioId, rolId: 1, ver: 0, typ: 'access' });
+    const token = await firmar({ sub: usuarioId, rolId: ROL_ADMIN_ID, ver: 0, typ: 'access' });
     db.usuarios[0].estado = 'inactivo';
 
     await expect(

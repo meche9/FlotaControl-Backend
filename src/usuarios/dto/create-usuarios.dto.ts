@@ -1,21 +1,20 @@
 import { 
   IsString, 
   IsOptional, 
-  IsInt, 
+  IsUUID, 
   IsEmail, 
   IsEnum, 
   IsNotEmpty, 
   MaxLength, 
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { UsuarioEstado } from '@prisma/client';
 import { IsStrongPassword } from '../../common/validators/password-policy.js';
 
 export class CreateUsuarioDto {
-  @IsInt()
+  @IsUUID('4', { message: 'El rolId debe ser un UUID v4 válido' })
   @IsNotEmpty()
-  @Type(() => Number)
-  rolId: number;
+  rolId: string;
 
   @IsString()
   @IsNotEmpty()

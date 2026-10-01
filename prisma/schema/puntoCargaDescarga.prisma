@@ -5,8 +5,8 @@ enum TipoPunto {
 }
 
 model PuntoCargaDescarga {
-  idPunto             Int             @id @default(autoincrement()) @map("id_punto")
-  idCliente           Int             @map("id_cliente")
+  idPunto             String          @id @default(uuid()) @map("id_punto") @db.VarChar(36)
+  idCliente           String          @map("id_cliente") @db.VarChar(36)
   nombreSede          String          @map("nombre_sede") @db.VarChar(100)
   tipoPunto           TipoPunto       @default(Ambos) @map("tipo_punto")
   direccion           String          @db.VarChar(255)

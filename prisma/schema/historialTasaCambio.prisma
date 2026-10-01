@@ -1,5 +1,5 @@
 model HistorialTasaCambio {
-  idTasaCambio    BigInt    @id @default(autoincrement()) @map("id_tasa_cambio")
+  idTasaCambio    String    @id @default(uuid()) @map("id_tasa_cambio") @db.VarChar(36)
   monedaOrigen    String    @map("moneda_origen") @db.VarChar(3)
   monedaDestino   String    @map("moneda_destino") @db.VarChar(3)
   tasa            Decimal   @db.Decimal(18, 6)

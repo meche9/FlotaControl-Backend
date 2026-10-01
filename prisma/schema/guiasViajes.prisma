@@ -15,16 +15,16 @@ enum GuiaOrdenEstado {
 
 
 model GuiaViaje {
-  idOrden                 Int                 @id @default(autoincrement()) @map("id_orden")
+  idOrden                 String              @id @default(uuid()) @map("id_orden") @db.VarChar(36)
   nroTransporte           String?             @unique @map("nro_transporte") @db.VarChar(30)
-  idCliente               Int                 @map("id_cliente")
-  idRuta                  Int                 @map("id_ruta")
-  idPuntoOrigen           Int                 @map("id_punto_origen")
-  idPuntoDestino          Int                 @map("id_punto_destino")
-  idTarifa                Int?                @map("id_tarifa")
+  idCliente               String              @map("id_cliente") @db.VarChar(36)
+  idRuta                  String              @map("id_ruta") @db.VarChar(36)
+  idPuntoOrigen           String              @map("id_punto_origen") @db.VarChar(36)
+  idPuntoDestino          String              @map("id_punto_destino") @db.VarChar(36)
+  idTarifa                String?             @map("id_tarifa") @db.VarChar(36)
   idVehiculoMotriz        String?             @map("id_vehiculo_motriz") @db.VarChar(36)
   idAcoplado              String?             @map("id_acoplado") @db.VarChar(36)
-  idConductor             Int?                @map("id_conductor")
+  idConductor             String?             @map("id_conductor") @db.VarChar(36)
 
   fechaProgramadaCarga    DateTime            @map("fecha_programada_carga")
   fechaSalidaReal         DateTime?           @map("fecha_salida_real")

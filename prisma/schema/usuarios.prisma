@@ -5,8 +5,8 @@ enum UsuarioEstado {
 }
 
 model Usuario {
-  id            Int           @id @default(autoincrement())
-  rolId         Int           @map("rol_id")
+  id            String        @id @default(uuid()) @db.VarChar(36)
+  rolId         String        @map("rol_id") @db.VarChar(36)
   nombre        String        @db.VarChar(100)
   apellido      String        @db.VarChar(100)
   email         String        @unique @db.VarChar(150)

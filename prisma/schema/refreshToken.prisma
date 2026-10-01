@@ -1,8 +1,8 @@
 // Refresh tokens opacos con rotación y detección de reutilización (OWASP A07).
 // Solo se guarda el hash SHA-256; el token en claro viaja únicamente en una cookie httpOnly.
 model RefreshToken {
-  id         Int       @id @default(autoincrement())
-  usuarioId  Int       @map("usuario_id")
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  usuarioId  String    @map("usuario_id") @db.VarChar(36)
   tokenHash  String    @unique @map("token_hash") @db.Char(64)
   // Todos los tokens rotados a partir del mismo login comparten familia
   familia    String    @db.Char(36)
