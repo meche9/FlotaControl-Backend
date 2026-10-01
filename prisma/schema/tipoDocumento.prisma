@@ -1,5 +1,5 @@
 model TipoDocumento {
-  idTipoDocumento     Int                  @id @default(autoincrement()) @map("id_tipo_documento")
+  idTipoDocumento     String               @id @default(uuid()) @map("id_tipo_documento") @db.VarChar(36)
   nombreDocumento     String               @map("nombre_documento") @db.VarChar(100)
   aplicaA             TipoDocumentoAplica  @map("aplica_a")
   esObligatorio       Boolean              @default(true) @map("es_obligatorio")

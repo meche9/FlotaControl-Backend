@@ -9,7 +9,7 @@ enum VehicleStatus {
 model Vehicle {
   // 1. Clave primaria ahora como UUID v4
   idVehiculo         String        @id @default(uuid()) @map("id_vehiculo") @db.VarChar(36)
-  idClasificacion    Int           @map("id_clasificacion")
+  idClasificacion    String        @map("id_clasificacion") @db.VarChar(36)
   placa              String        @unique @db.VarChar(15)
   marca              String        @db.VarChar(50)
   modelo             String?       @db.VarChar(50)
@@ -19,6 +19,7 @@ model Vehicle {
   capacidadCarga     Decimal?      @db.Decimal(10, 2) @map("capacidad_carga")
   capacidadArrastre  Decimal?      @db.Decimal(10, 2) @map("capacidad_arrastre")
   estado             VehicleStatus @default(Activo) @map("estado")
+  foto               String?       @db.VarChar(64)
 
   // 2. FK del acoplado asignado (auto-relación) convertida a UUID
   idAcopladoActual   String?       @unique @map("id_acoplado_actual") @db.VarChar(36)

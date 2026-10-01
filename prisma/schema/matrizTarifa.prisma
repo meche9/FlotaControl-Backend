@@ -6,11 +6,11 @@ enum MatrizTipoCobro {
 }
 
 model MatrizTarifa {
-  idTarifa                Int                   @id @default(autoincrement()) @map("id_tarifa")
+  idTarifa                String                @id @default(uuid()) @map("id_tarifa") @db.VarChar(36)
   codigoTarifa            String?               @map("codigo_tarifa") @db.VarChar(30)
-  idCliente               Int?                  @map("id_cliente")
-  idRuta                  Int                   @map("id_ruta")
-  idClasificacionVehiculo Int?                  @map("id_clasificacion_vehiculo")
+  idCliente               String?               @map("id_cliente") @db.VarChar(36)
+  idRuta                  String                @map("id_ruta") @db.VarChar(36)
+  idClasificacionVehiculo String?               @map("id_clasificacion_vehiculo") @db.VarChar(36)
   tipoCobro               MatrizTipoCobro       @default(Por_Viaje_Fijo) @map("tipo_cobro")
   montoTarifa             Decimal               @map("monto_tarifa") @db.Decimal(12, 2)
   montoMinimo             Decimal?              @default(0.00) @map("monto_minimo") @db.Decimal(12, 2)

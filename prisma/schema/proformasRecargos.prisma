@@ -6,9 +6,9 @@ enum RecargoAprobacion {
 }
 
 model ProformaRecargo {
-  idProformaRecargo   Int                 @id @default(autoincrement()) @map("id_proforma_recargo")
-  idDetalle           Int                 @map("id_detalle")
-  idRecargo           Int?                @map("id_recargo")
+  idProformaRecargo   String              @id @default(uuid()) @map("id_proforma_recargo") @db.VarChar(36)
+  idDetalle           String              @map("id_detalle") @db.VarChar(36)
+  idRecargo           String?             @map("id_recargo") @db.VarChar(36)
   montoTotalAprobado  Decimal             @map("monto_total_aprobado") @db.Decimal(10, 2)
   estadoAprobacion    RecargoAprobacion   @default(Aprobado) @map("estado_aprobacion")
 

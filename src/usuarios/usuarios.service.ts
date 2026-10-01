@@ -68,7 +68,7 @@ export class UsuariosService {
     }
 
     //Buscar usuario por id
-    async findOne(id: number) {
+    async findOne(id: string) {
         const usuario = await this.prisma.usuario.findUnique({
             where: { id: id },
             omit: CAMPOS_SENSIBLES,
@@ -86,7 +86,7 @@ export class UsuariosService {
 
 
     //Actualizar datos de un Usuario
-    async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
+    async update(id: string, updateUsuarioDto: UpdateUsuarioDto) {
         // 1. Verificamos si el Usuario existe (lanza error 404 si no)
         await this.findOne(id);
 

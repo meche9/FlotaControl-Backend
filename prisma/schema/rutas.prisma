@@ -1,10 +1,10 @@
 model Ruta {
-  idRuta                Int                 @id @default(autoincrement()) @map("id_ruta")
+  idRuta                String              @id @default(uuid()) @map("id_ruta") @db.VarChar(36)
   nombreRuta            String              @map("nombre_ruta") @db.VarChar(150)
   ciudadOrigen          String              @map("ciudad_origen") @db.VarChar(100)
   ciudadDestino         String              @map("ciudad_destino") @db.VarChar(100)
-  idPuntoOrigen         Int?                @map("id_punto_origen")
-  idPuntoDestino        Int?                @map("id_punto_destino")
+  idPuntoOrigen         String?             @map("id_punto_origen") @db.VarChar(36)
+  idPuntoDestino        String?             @map("id_punto_destino") @db.VarChar(36)
   distanciaKm           Decimal             @default(0.00) @map("distancia_km") @db.Decimal(8, 2)
   tiempoEstimadoHoras   Decimal?            @map("tiempo_estimado_horas") @db.Decimal(4, 1)
   activo                Boolean             @default(true)

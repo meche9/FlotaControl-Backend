@@ -1,7 +1,7 @@
 model ProformaDetalle {
-  idDetalle               Int               @id @default(autoincrement()) @map("id_detalle")
-  idProforma              Int               @map("id_proforma")
-  idOrden                 Int               @unique @map("id_orden")
+  idDetalle               String            @id @default(uuid()) @map("id_detalle") @db.VarChar(36)
+  idProforma              String            @map("id_proforma") @db.VarChar(36)
+  idOrden                 String            @unique @map("id_orden") @db.VarChar(36)
   nroTransporte           Int               @map("nro_transporte")
   montoFleteAprobado      Decimal           @map("monto_flete_aprobado") @db.Decimal(12, 2)
   diferenciaFlete         Decimal?          @default(0.00) @map("diferencia_flete") @db.Decimal(12, 2)

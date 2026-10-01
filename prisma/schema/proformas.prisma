@@ -6,9 +6,9 @@ enum ProformaEstado {
 }
 
 model Proforma {
-  idProforma          Int               @id @default(autoincrement()) @map("id_proforma")
+  idProforma          String            @id @default(uuid()) @map("id_proforma") @db.VarChar(36)
   nroProforma         String            @map("nro_proforma") @db.VarChar(50)
-  idCliente           Int               @map("id_cliente")
+  idCliente           String            @map("id_cliente") @db.VarChar(36)
   fechaFacturacion    DateTime          @map("fecha_facturacion") @db.Date
   fechaDesdeViajes    DateTime          @map("fecha_desde_viajes") @db.Date
   fechaHastaViajes    DateTime          @map("fecha_hasta_viajes") @db.Date

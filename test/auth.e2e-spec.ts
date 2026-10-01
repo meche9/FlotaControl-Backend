@@ -6,7 +6,7 @@ import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { crearPrismaFalso } from './utils/prisma-falso.js';
+import { crearPrismaFalso, ROL_ADMIN_ID, ROL_OPERADOR_ID } from './utils/prisma-falso.js';
 
 const PASSWORD = 'Clave$egura2026';
 const ORIGEN_FRONTEND = 'http://localhost:5173';
@@ -39,8 +39,8 @@ describe('Autenticación (e2e)', () => {
 
     const db = crearPrismaFalso();
     const hash = bcrypt.hashSync(PASSWORD, 4);
-    db.agregarUsuario({ email: 'admin@fleetflow.com', passwordHash: hash, rolId: 1 });
-    db.agregarUsuario({ email: 'operador@fleetflow.com', passwordHash: hash, rolId: 2 });
+    db.agregarUsuario({ email: 'admin@fleetflow.com', passwordHash: hash, rolId: ROL_ADMIN_ID });
+    db.agregarUsuario({ email: 'operador@fleetflow.com', passwordHash: hash, rolId: ROL_OPERADOR_ID });
 
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)

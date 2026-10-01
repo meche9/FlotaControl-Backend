@@ -50,7 +50,7 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException(SESION_INVALIDA);
     }
 
-    if (payload.typ !== 'access' || typeof payload.sub !== 'number') {
+    if (payload.typ !== 'access' || typeof payload.sub !== 'string') {
       throw new UnauthorizedException(SESION_INVALIDA);
     }
 

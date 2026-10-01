@@ -2,8 +2,8 @@ import { IsString, IsInt, IsOptional, IsEnum, MaxLength, IsUUID } from 'class-va
 import { VehicleStatus } from '@prisma/client';
 
 export class CreateVehicleDto {
-  @IsInt()
-  idClasificacion: number;
+  @IsUUID('4', { message: 'El idClasificacion debe ser un UUID v4 válido' })
+  idClasificacion: string;
 
   @IsString()
   @MaxLength(15)
