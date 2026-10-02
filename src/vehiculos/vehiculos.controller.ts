@@ -34,6 +34,15 @@ export class VehiculosController {
     return this.vehiculosService.findAll();
   }
 
+  @Get('tipos')
+  findTipos() {
+    return this.vehiculosService.findTipos();
+  }
+
+  @Get('clasificaciones')
+  findClasificaciones() {
+    return this.vehiculosService.findClasificaciones();
+  }
 
   @Get('placa/:placa')
   findOneByPlaca(@Param('placa') placa: string) {

@@ -1,5 +1,5 @@
 model TipoVehiculo {
-  idTipo         String                     @id @default(uuid()) @map("id_tipo") @db.VarChar(36)
+  idTipo         Int                        @id @default(autoincrement()) @map("id_tipo")
   nombreTipo     String                     @unique @map("nombre_tipo") @db.VarChar(50)
   activo         Boolean                    @default(true)
   clasificaciones ClasificacionVehiculo[]

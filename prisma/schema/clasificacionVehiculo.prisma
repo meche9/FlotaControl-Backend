@@ -1,6 +1,6 @@
 model ClasificacionVehiculo {
-  idClasificacion   String            @id @default(uuid()) @map("id_clasificacion") @db.VarChar(36)
-  idTipo            String            @map("id_tipo") @db.VarChar(36)
+  idClasificacion   Int               @id @default(autoincrement()) @map("id_clasificacion")
+  idTipo            Int               @map("id_tipo")
   nombreClasificacion String          @map("nombre_clasificacion") @db.VarChar(50)
   activo            Boolean           @default(true)
   

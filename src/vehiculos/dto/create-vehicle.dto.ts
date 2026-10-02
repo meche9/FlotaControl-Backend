@@ -1,9 +1,11 @@
 import { IsString, IsInt, IsOptional, IsEnum, MaxLength, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
 import { VehicleStatus } from '@prisma/client';
 
 export class CreateVehicleDto {
-  @IsUUID('4', { message: 'El idClasificacion debe ser un UUID v4 válido' })
-  idClasificacion: string;
+  @Type(() => Number)
+  @IsInt({ message: 'El idClasificacion debe ser un número entero' })
+  idClasificacion: number;
 
   @IsString()
   @MaxLength(15)
