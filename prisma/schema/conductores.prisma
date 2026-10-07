@@ -1,7 +1,6 @@
 enum ConductorSexo {
   M
   F
-  Otro
 }
 
 enum ConductorEstadoCivil {
@@ -26,6 +25,7 @@ model Conductor {
   nombres                 String          @db.VarChar(50)
   apellidos               String          @db.VarChar(50)
   fechaNacimiento         DateTime?       @map("fecha_nacimiento") @db.Date
+  fechaIngreso            DateTime?       @map("fecha_ingreso") @db.Date
   sexo                    ConductorSexo?
   nacionalidad            String?         @db.VarChar(50)
   estadoCivil             ConductorEstadoCivil? @map("estado_civil")
@@ -58,7 +58,9 @@ model Conductor {
   
   estado                  ConductorEstado @default(Activo)
   idVehiculoHabitual      String?         @map("id_vehiculo_habitual") @db.VarChar(36)
-  vehiculoHabitual        Vehicle?        @relation(fields: [idVehiculoHabitual], references: [idVehiculo], onDelete: SetNull)
+  vehiculoHabitual        Vehicle?        @relation(fields: [idVehiculoHabitual], references: [idVehiculo], onDelete: SetNull, onUpdate: Cascade)
+  
+  foto                    String?         @db.VarChar(64)
   
   fechaCreacion           DateTime        @default(now()) @map("fecha_creacion")
   fechaActualizacion      DateTime        @default(now()) @updatedAt @map("fecha_actualizacion")

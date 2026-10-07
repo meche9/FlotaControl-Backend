@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { access, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-export type CarpetaImagen = 'vehiculos' | 'usuarios';
+export type CarpetaImagen = 'vehiculos' | 'usuarios' | 'conductores';
 
 export interface ArchivoImagen {
   buffer: Buffer;

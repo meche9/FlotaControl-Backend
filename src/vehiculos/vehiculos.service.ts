@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ImagenesService, type ArchivoImagen } from '../imagenes/imagenes.service.js';
 import { CreateVehicleDto } from '../vehiculos/dto/create-vehicle.dto.js';
@@ -11,21 +12,46 @@ export class VehiculosService {
     private readonly imagenes: ImagenesService,
   ) { }
 
-
+  private manejarErrorPrisma(error: unknown, dto?: Partial<CreateVehicleDto>): never {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const target = String(error.meta?.target ?? '');
+      if (target.includes('placa')) {
+        const placa = dto?.placa ? ` '${dto.placa}'` : '';
+        throw new ConflictException(`Ya existe un vehículo registrado con la placa${placa}. Por favor, verifique la matrícula.`);
+      }
+      if (target.includes('chasis') || target.includes('numeroChasis')) {
+        const chasis = dto?.numeroChasis ? ` '${dto.numeroChasis}'` : '';
+        throw new ConflictException(`Ya existe un vehículo registrado con el número de chasis (VIN)${chasis}.`);
+      }
+      if (target.includes('motor') || target.includes('numeroMotor')) {
+        const motor = dto?.numeroMotor ? ` '${dto.numeroMotor}'` : '';
+        throw new ConflictException(`Ya existe un vehículo registrado con el número de motor${motor}.`);
+      }
+      if (target.includes('acoplado')) {
+        throw new ConflictException('El acoplado seleccionado ya se encuentra asignado a otra unidad motora.');
+      }
+      throw new ConflictException('Ya existe un vehículo con estos datos únicos en el sistema.');
+    }
+    throw error;
+  }
 
   //Crear un vehiculo
   async create(createVehicleDto: CreateVehicleDto) {
-    return await this.prisma.vehicle.create({
-      data: createVehicleDto,
-      include: {
-        clasificacion: {
-          include: {
-            tipo: true,
+    try {
+      return await this.prisma.vehicle.create({
+        data: createVehicleDto,
+        include: {
+          clasificacion: {
+            include: {
+              tipo: true,
+            },
           },
+          conductoresHabituales: true,
         },
-        conductoresHabituales: true,
-      },
-    });
+      });
+    } catch (error) {
+      this.manejarErrorPrisma(error, createVehicleDto);
+    }
   }
 
   //Buscar todos los vehiculos
@@ -108,18 +134,22 @@ export class VehiculosService {
     await this.findOne(id);
 
     // 2. Actualizamos en la base de datos
-    return await this.prisma.vehicle.update({
-      where: { idVehiculo: id },
-      data: updateVehicleDto,
-      include: {
-        clasificacion: {
-          include: {
-            tipo: true,
+    try {
+      return await this.prisma.vehicle.update({
+        where: { idVehiculo: id },
+        data: updateVehicleDto,
+        include: {
+          clasificacion: {
+            include: {
+              tipo: true,
+            },
           },
+          conductoresHabituales: true,
         },
-        conductoresHabituales: true,
-      },
-    });
+      });
+    } catch (error) {
+      this.manejarErrorPrisma(error, updateVehicleDto);
+    }
   }
 
   //Eliminar un vehiculo
