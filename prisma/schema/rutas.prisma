@@ -1,5 +1,6 @@
 model Ruta {
   idRuta                String              @id @default(uuid()) @map("id_ruta") @db.VarChar(36)
+  idCliente             String              @map("id_cliente") @db.VarChar(36)
   nombreRuta            String              @map("nombre_ruta") @db.VarChar(150)
   ciudadOrigen          String              @map("ciudad_origen") @db.VarChar(100)
   ciudadDestino         String              @map("ciudad_destino") @db.VarChar(100)
@@ -9,6 +10,7 @@ model Ruta {
   tiempoEstimadoHoras   Decimal?            @map("tiempo_estimado_horas") @db.Decimal(4, 1)
   activo                Boolean             @default(true)
 
+  cliente               Cliente             @relation(fields: [idCliente], references: [idCliente], onDelete: Cascade)
   puntoOrigen           PuntoCargaDescarga? @relation("RutaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: SetNull)
   puntoDestino          PuntoCargaDescarga? @relation("RutaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: SetNull)
   guiasViajes           GuiaViaje[]

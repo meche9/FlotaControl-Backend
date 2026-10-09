@@ -2,7 +2,7 @@ model Cliente {
   idCliente           String              @id @default(uuid()) @map("id_cliente") @db.VarChar(36)
   razonSocial         String              @map("razon_social") @db.VarChar(150)
   nombreComercial     String?             @map("nombre_comercial") @db.VarChar(150)
-  rif                 String              @unique @db.VarChar(30)
+  rif                 String              @unique(map: "clientes_rif_key") @db.VarChar(30)
   direccionFiscal     String              @map("direccion_fiscal") @db.VarChar(255)
   telefonoContacto    String              @map("telefono_contacto") @db.VarChar(30)
   personaContacto     String              @map("persona_contacto") @db.VarChar(255)
@@ -11,6 +11,7 @@ model Cliente {
   fechaActualizacion  DateTime            @default(now()) @updatedAt @map("fecha_actualizacion")
 
   puntosCargaDescarga PuntoCargaDescarga[]
+  rutas               Ruta[]
   guiasViajes         GuiaViaje[]
   matrizTarifas       MatrizTarifa[]
   proformas           Proforma[]

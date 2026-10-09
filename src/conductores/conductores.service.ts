@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ImagenesService, type ArchivoImagen } from '../imagenes/imagenes.service.js';
 import { CreateConductorDto } from './dto/create-conductores.dto.js';
@@ -11,14 +11,62 @@ export class ConductoresService {
     private readonly imagenes: ImagenesService,
   ) {}
 
+  // Validar que el vehículo esté disponible y pertenezca a la clasificación de motores (no acoplados)
+  private async validarVehiculoDisponible(idVehiculo: string, idConductorActual?: string) {
+    const vehiculo = await this.prisma.vehicle.findUnique({
+      where: { idVehiculo },
+      include: {
+        clasificacion: {
+          include: {
+            tipo: true,
+          },
+        },
+      },
+    });
+
+    if (!vehiculo) {
+      throw new BadRequestException('El vehículo seleccionado no existe en el sistema.');
+    }
+
+    // Validar clasificación tipo motriz / motores (idTipo !== 2 y no sea acoplado)
+    const idTipo = Number(vehiculo.clasificacion?.tipo?.idTipo ?? vehiculo.clasificacion?.idTipo ?? 1);
+    const nombreTipo = (vehiculo.clasificacion?.tipo?.nombreTipo ?? '').toLowerCase();
+    const esAcoplado = idTipo === 2 || nombreTipo.includes('acoplado');
+    if (esAcoplado) {
+      throw new BadRequestException(
+        'Solo se pueden asignar vehículos de clasificación motora (tractocamiones / unidades motoras). Los acoplados no pueden asignarse a un conductor.',
+      );
+    }
+
+    // Validar si ya está asignado a otro conductor en la tabla conductores
+    const conductorAsignado = await this.prisma.conductor.findFirst({
+      where: {
+        idVehiculoHabitual: idVehiculo,
+        ...(idConductorActual ? { NOT: { idConductor: idConductorActual } } : {}),
+      },
+    });
+
+    if (conductorAsignado) {
+      throw new BadRequestException(
+        `El vehículo con placa ${vehiculo.placa} ya se encuentra asignado al conductor ${conductorAsignado.nombres} ${conductorAsignado.apellidos}.`,
+      );
+    }
+  }
+
   // 1. Crear un conductor
   async create(createConductorDto: CreateConductorDto) {
     const { fechaNacimiento, fechaIngreso, idVehiculoHabitual, ...resto } = createConductorDto;
+    const idVehiculo =
+      idVehiculoHabitual && idVehiculoHabitual.trim() !== '' ? idVehiculoHabitual.trim() : null;
+
+    if (idVehiculo) {
+      await this.validarVehiculoDisponible(idVehiculo);
+    }
+
     return await this.prisma.conductor.create({
       data: {
         ...resto,
-        idVehiculoHabitual:
-          idVehiculoHabitual && idVehiculoHabitual.trim() !== '' ? idVehiculoHabitual.trim() : null,
+        idVehiculoHabitual: idVehiculo,
         fechaNacimiento:
           fechaNacimiento && fechaNacimiento.trim() !== '' ? new Date(fechaNacimiento.trim()) : null,
         fechaIngreso:
@@ -108,10 +156,15 @@ export class ConductoresService {
     }
 
     if (idVehiculoHabitual !== undefined) {
-      dataToUpdate.idVehiculoHabitual =
+      const idVehiculo =
         typeof idVehiculoHabitual === 'string' && idVehiculoHabitual.trim() !== ''
           ? idVehiculoHabitual.trim()
           : null;
+
+      if (idVehiculo) {
+        await this.validarVehiculoDisponible(idVehiculo, id);
+      }
+      dataToUpdate.idVehiculoHabitual = idVehiculo;
     }
 
     if (fechaNacimiento !== undefined) {

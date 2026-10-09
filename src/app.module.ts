@@ -6,6 +6,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module.js'
 import { VehiculosModule } from './vehiculos/vehiculos.module.js';
 import { ConductoresModule } from './conductores/conductores.module.js';
+import { ClientesModule } from './clientes/clientes.module.js';
+import { PuntosCargaModule } from './puntos-cargas-descargas/puntosCargasDescargas.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
@@ -37,6 +39,8 @@ import { validateEnv } from './config/env.validation.js';
     UsuariosModule,
     VehiculosModule,
     ConductoresModule,
+    ClientesModule,
+    PuntosCargaModule,
   ],
   controllers: [],
   providers: [

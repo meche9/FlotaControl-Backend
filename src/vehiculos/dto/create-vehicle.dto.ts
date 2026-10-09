@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, IsEnum, MaxLength, IsUUID } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsEnum, MaxLength, IsUUID, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { VehicleStatus } from '@prisma/client';
 
@@ -42,8 +42,9 @@ export class CreateVehicleDto {
   @IsEnum(VehicleStatus)
   estado?: VehicleStatus;
 
-  // Cambiado de @IsInt() number a @IsUUID('4') string
+  // Cambiado de @IsInt() number a @IsUUID('4') string, permite null para desacoplar
   @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
   @IsUUID('4', { message: 'El idAcopladoActual debe ser un UUID v4 válido' })
-  idAcopladoActual?: string;
+  idAcopladoActual?: string | null;
 }

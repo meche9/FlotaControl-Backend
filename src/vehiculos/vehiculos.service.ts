@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ImagenesService, type ArchivoImagen } from '../imagenes/imagenes.service.js';
@@ -13,24 +13,37 @@ export class VehiculosService {
   ) { }
 
   private manejarErrorPrisma(error: unknown, dto?: Partial<CreateVehicleDto>): never {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      const target = String(error.meta?.target ?? '');
-      if (target.includes('placa')) {
-        const placa = dto?.placa ? ` '${dto.placa}'` : '';
-        throw new ConflictException(`Ya existe un vehículo registrado con la placa${placa}. Por favor, verifique la matrícula.`);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        const target = String(error.meta?.target ?? '');
+        if (target.includes('placa')) {
+          const placa = dto?.placa ? ` '${dto.placa}'` : '';
+          throw new ConflictException(`Ya existe un vehículo registrado con la placa${placa}. Por favor, verifique la matrícula.`);
+        }
+        if (target.includes('chasis') || target.includes('numeroChasis')) {
+          const chasis = dto?.numeroChasis ? ` '${dto.numeroChasis}'` : '';
+          throw new ConflictException(`Ya existe un vehículo registrado con el número de chasis (VIN)${chasis}.`);
+        }
+        if (target.includes('motor') || target.includes('numeroMotor')) {
+          const motor = dto?.numeroMotor ? ` '${dto.numeroMotor}'` : '';
+          throw new ConflictException(`Ya existe un vehículo registrado con el número de motor${motor}.`);
+        }
+        if (target.includes('acoplado')) {
+          throw new ConflictException('El acoplado seleccionado ya se encuentra asignado a otra unidad motora.');
+        }
+        throw new ConflictException('Ya existe un vehículo con estos datos únicos en el sistema.');
       }
-      if (target.includes('chasis') || target.includes('numeroChasis')) {
-        const chasis = dto?.numeroChasis ? ` '${dto.numeroChasis}'` : '';
-        throw new ConflictException(`Ya existe un vehículo registrado con el número de chasis (VIN)${chasis}.`);
+
+      if (error.code === 'P2003') {
+        const field = String(error.meta?.field_name ?? '');
+        if (field.includes('id_clasificacion') || field.includes('clasificacion')) {
+          throw new BadRequestException('La clasificación de vehículo seleccionada no es válida o no existe en el sistema.');
+        }
+        if (field.includes('id_acoplado_actual') || field.includes('acoplado')) {
+          throw new BadRequestException('El acoplado asociado seleccionado no existe en el sistema.');
+        }
+        throw new BadRequestException('Error de integridad referencial: uno de los registros relacionados no existe en el sistema.');
       }
-      if (target.includes('motor') || target.includes('numeroMotor')) {
-        const motor = dto?.numeroMotor ? ` '${dto.numeroMotor}'` : '';
-        throw new ConflictException(`Ya existe un vehículo registrado con el número de motor${motor}.`);
-      }
-      if (target.includes('acoplado')) {
-        throw new ConflictException('El acoplado seleccionado ya se encuentra asignado a otra unidad motora.');
-      }
-      throw new ConflictException('Ya existe un vehículo con estos datos únicos en el sistema.');
     }
     throw error;
   }
