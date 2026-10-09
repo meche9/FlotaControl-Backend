@@ -45,7 +45,7 @@ model GuiaViaje {
   ruta                    Ruta                @relation(fields: [idRuta], references: [idRuta], onDelete: Restrict)
   puntoOrigen             PuntoCargaDescarga  @relation("GuiaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: Restrict)
   puntoDestino            PuntoCargaDescarga  @relation("GuiaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: Restrict)
-  tarifa                  MatrizTarifa?       @relation(fields: [idTarifa], references: [idTarifa], onDelete: SetNull)
+  tarifa                  RutaTarifa?         @relation(fields: [idTarifa], references: [idTarifa], onDelete: SetNull)
   vehiculoMotriz          Vehicle?            @relation("GuiaMotriz", fields: [idVehiculoMotriz], references: [idVehiculo], onDelete: Restrict)
   acoplado                Vehicle?            @relation("GuiaAcoplado", fields: [idAcoplado], references: [idVehiculo], onDelete: Restrict)
   conductor               Conductor?          @relation(fields: [idConductor], references: [idConductor], onDelete: Restrict)

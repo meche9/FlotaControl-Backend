@@ -13,7 +13,7 @@ model Cliente {
   puntosCargaDescarga PuntoCargaDescarga[]
   rutas               Ruta[]
   guiasViajes         GuiaViaje[]
-  matrizTarifas       MatrizTarifa[]
+  rutaTarifas         RutaTarifa[]
   proformas           Proforma[]
 
   @@map("clientes")

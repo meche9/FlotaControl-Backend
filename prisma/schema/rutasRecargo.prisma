@@ -4,18 +4,18 @@ enum RecargoTipoCalculo {
   Por_Hora        @map("Por Hora")
 }
 
-model MatrizRecargo {
+model RutaRecargo {
   idRecargo       String              @id @default(uuid()) @map("id_recargo") @db.VarChar(36)
   idTarifa        String              @map("id_tarifa") @db.VarChar(36)
   concepto        String              @db.VarChar(100)
   tipoCalculo     RecargoTipoCalculo  @default(Monto_Fijo) @map("tipo_calculo")
   valor           Decimal             @db.Decimal(10, 2)
 
-  tarifa          MatrizTarifa        @relation(fields: [idTarifa], references: [idTarifa], onDelete: Cascade, onUpdate: Restrict)
+  tarifa          RutaTarifa          @relation(fields: [idTarifa], references: [idTarifa], onDelete: Cascade, onUpdate: Restrict)
   proformaRecargos ProformaRecargo[]
   guiasRecargos   GuiaViajeRecargo[]
 
-  @@map("matriz_recargos")
+  @@map("rutas_recargos")
 }
 
 

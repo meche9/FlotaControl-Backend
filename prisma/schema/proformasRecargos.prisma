@@ -13,7 +13,7 @@ model ProformaRecargo {
   estadoAprobacion    RecargoAprobacion   @default(Aprobado) @map("estado_aprobacion")
 
   detalle             ProformaDetalle     @relation(fields: [idDetalle], references: [idDetalle], onDelete: Cascade)
-  recargo             MatrizRecargo?      @relation(fields: [idRecargo], references: [idRecargo], onDelete: SetNull)
+  recargo             RutaRecargo?        @relation(fields: [idRecargo], references: [idRecargo], onDelete: SetNull)
   guiasRecargos       GuiaViajeRecargo[]
 
   @@map("proforma_recargos")

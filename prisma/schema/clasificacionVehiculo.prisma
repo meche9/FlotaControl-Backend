@@ -6,7 +6,7 @@ model ClasificacionVehiculo {
   
   tipo              TipoVehiculo      @relation(fields: [idTipo], references: [idTipo], onDelete: Restrict)
   vehiculos         Vehicle[]
-  matrizTarifas     MatrizTarifa[]
+  rutaTarifas       RutaTarifa[]
 
   @@map("clasificaciones_vehiculos")
 }

@@ -1,17 +1,17 @@
-enum MatrizTipoCobro {
+enum RutaTipoCobro {
   Por_Viaje_Fijo    @map("Por Viaje Fijo")
   Por_Tonelada      @map("Por Tonelada")
   Por_Kilometro     @map("Por Kilometro")
   Por_Volumen_M3    @map("Por Volumen M3")
 }
 
-model MatrizTarifa {
+model RutaTarifa {
   idTarifa                String                @id @default(uuid()) @map("id_tarifa") @db.VarChar(36)
   codigoTarifa            String?               @map("codigo_tarifa") @db.VarChar(30)
   idCliente               String?               @map("id_cliente") @db.VarChar(36)
   idRuta                  String                @map("id_ruta") @db.VarChar(36)
   idClasificacionVehiculo Int?                  @map("id_clasificacion_vehiculo")
-  tipoCobro               MatrizTipoCobro       @default(Por_Viaje_Fijo) @map("tipo_cobro")
+  tipoCobro               RutaTipoCobro         @default(Por_Viaje_Fijo) @map("tipo_cobro")
   montoTarifa             Decimal               @map("monto_tarifa") @db.Decimal(12, 2)
   montoMinimo             Decimal?              @default(0.00) @map("monto_minimo") @db.Decimal(12, 2)
   moneda                  String                @default("USD") @db.VarChar(10)
@@ -26,8 +26,8 @@ model MatrizTarifa {
   clasificacionVehiculo   ClasificacionVehiculo? @relation(fields: [idClasificacionVehiculo], references: [idClasificacion], onDelete: Restrict, onUpdate: Restrict)
   
   guiasViajes             GuiaViaje[]
-  matrizRecargos          MatrizRecargo[]
+  rutaRecargos            RutaRecargo[]
 
-  @@map("matriz_tarifas")
+  @@map("rutas_tarifas")
 }
 

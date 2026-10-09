@@ -1,0 +1,11 @@
+model PeajeVzla {
+  idPeaje            Int      @id @default(autoincrement()) @map("id_peaje")
+  nombrePeaje        String   @map("nombre_peaje") @db.VarChar(150)
+  estadoUbicacion    String   @map("estado_ubicacion") @db.VarChar(100)
+  ubicacionDetallada String?  @map("ubicacion_detallada") @db.VarChar(255)
+  activo             Boolean  @default(true)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  @@map("peajes_vzla")
+}

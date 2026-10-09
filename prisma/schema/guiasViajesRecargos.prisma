@@ -17,7 +17,7 @@ model GuiaViajeRecargo {
   fechaActualizacion    DateTime            @default(now()) @updatedAt @map("fecha_actualizacion")
 
   orden                 GuiaViaje           @relation(fields: [idOrden], references: [idOrden], onDelete: Cascade, onUpdate: Cascade)
-  recargo               MatrizRecargo?      @relation(fields: [idRecargo], references: [idRecargo], onDelete: SetNull, onUpdate: Restrict)
+  recargo               RutaRecargo?        @relation(fields: [idRecargo], references: [idRecargo], onDelete: SetNull, onUpdate: Restrict)
   proformaRecargo       ProformaRecargo?    @relation(fields: [idProformaRecargo], references: [idProformaRecargo], onDelete: SetNull, onUpdate: Restrict)
 
   @@map("guias_viajes_recargos")

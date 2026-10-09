@@ -1,0 +1,15 @@
+model RutaPeaje {
+  idRutaPeaje        String   @id @default(uuid()) @map("id_ruta_peaje") @db.VarChar(36)
+  idRuta             String   @map("id_ruta") @db.VarChar(36)
+  nombrePeaje        String   @map("nombre_peaje") @db.VarChar(150)
+  ubicacion          String?  @db.VarChar(255)
+  orden              Int      @default(1)
+  costo              Decimal  @default(0.00) @db.Decimal(10, 2)
+  activo             Boolean  @default(true)
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @default(now()) @updatedAt @map("fecha_actualizacion")
+
+  ruta               Ruta     @relation(fields: [idRuta], references: [idRuta], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("rutas_peajes")
+}
