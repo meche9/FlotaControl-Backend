@@ -1,10 +1,3 @@
-enum RutaTipoCobro {
-  Por_Viaje_Fijo    @map("Por Viaje Fijo")
-  Por_Tonelada      @map("Por Tonelada")
-  Por_Kilometro     @map("Por Kilometro")
-  Por_Volumen_M3    @map("Por Volumen M3")
-}
-
 model RutaTarifa {
   idTarifa                String                @id @default(uuid()) @map("id_tarifa") @db.VarChar(36)
   codigoTarifa            String?               @map("codigo_tarifa") @db.VarChar(30)

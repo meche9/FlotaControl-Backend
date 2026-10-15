@@ -1,3 +1,10 @@
+enum RutaTipoCobro {
+  Por_Viaje_Fijo @map("Por Viaje Fijo")
+  Por_Tonelada   @map("Por Tonelada")
+  Por_Kilometro  @map("Por Kilometro")
+  Por_Volumen_M3 @map("Por Volumen M3")
+}
+
 model Ruta {
   idRuta                String              @id @default(uuid()) @map("id_ruta") @db.VarChar(36)
   idCliente             String              @map("id_cliente") @db.VarChar(36)
@@ -9,6 +16,9 @@ model Ruta {
   distanciaKm           Decimal             @default(0.00) @map("distancia_km") @db.Decimal(8, 2)
   tiempoEstimadoHoras   Decimal?            @map("tiempo_estimado_horas") @db.Decimal(4, 1)
   consumoEstimadoGasoil Decimal             @default(0.000000) @map("consumo_estimado_gasoil") @db.Decimal(20, 6)
+  montoTarifa           Decimal             @default(0.00) @map("monto_tarifa") @db.Decimal(12, 2)
+  tipoCobro             RutaTipoCobro       @default(Por_Viaje_Fijo) @map("tipo_cobro")
+  moneda                String              @default("USD") @map("moneda") @db.VarChar(10)
   activo                Boolean             @default(true)
 
   cliente               Cliente             @relation(fields: [idCliente], references: [idCliente], onDelete: Cascade)
