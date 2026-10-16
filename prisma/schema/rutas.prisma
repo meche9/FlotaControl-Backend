@@ -25,8 +25,8 @@ model Ruta {
   puntoOrigen           PuntoCargaDescarga? @relation("RutaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: SetNull)
   puntoDestino          PuntoCargaDescarga? @relation("RutaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: SetNull)
   guiasViajes           GuiaViaje[]
-  rutaTarifas           RutaTarifa[]
   rutaPeajes            RutaPeaje[]
+  rutaRecargos          RutaRecargo[]
 
   @@map("rutas")
 }

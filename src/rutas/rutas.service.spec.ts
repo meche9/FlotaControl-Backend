@@ -197,7 +197,7 @@ describe('RutasService', () => {
     it('debe lanzar BadRequestException si la ruta tiene guías asociadas', async () => {
       prismaMock.ruta.findUnique.mockResolvedValue({
         idRuta: 'r1111111-1111-4111-8111-111111111111',
-        _count: { guiasViajes: 3, rutaTarifas: 0 },
+        _count: { guiasViajes: 3 },
       });
 
       await expect(service.remove('r1111111-1111-4111-8111-111111111111')).rejects.toThrow(
@@ -205,10 +205,10 @@ describe('RutasService', () => {
       );
     });
 
-    it('debe eliminar la ruta si no tiene guías ni tarifas asociadas', async () => {
+    it('debe eliminar la ruta si no tiene guías asociadas', async () => {
       prismaMock.ruta.findUnique.mockResolvedValue({
         idRuta: 'r1111111-1111-4111-8111-111111111111',
-        _count: { guiasViajes: 0, rutaTarifas: 0 },
+        _count: { guiasViajes: 0 },
       });
       prismaMock.ruta.delete.mockResolvedValue({ idRuta: 'r1111111-1111-4111-8111-111111111111' });
 

@@ -32,7 +32,7 @@ export class RutasService {
           throw new BadRequestException('El punto de destino seleccionado no es válido o no existe.');
         }
         throw new BadRequestException(
-          'Error de integridad referencial: la ruta no puede ser procesada o eliminada debido a registros vinculados (guías de viaje o tarifas).',
+          'Error de integridad referencial: la ruta no puede ser procesada o eliminada debido a registros vinculados (guías de viaje).',
         );
       }
     }
@@ -155,8 +155,8 @@ export class RutasService {
           _count: {
             select: {
               guiasViajes: true,
-              rutaTarifas: true,
               rutaPeajes: true,
+              rutaRecargos: true,
             },
           },
         },
@@ -213,8 +213,8 @@ export class RutasService {
         _count: {
           select: {
             guiasViajes: true,
-            rutaTarifas: true,
             rutaPeajes: true,
+            rutaRecargos: true,
           },
         },
       },
@@ -247,15 +247,12 @@ export class RutasService {
             orden: 'asc',
           },
         },
-        rutaTarifas: {
-          where: { activo: true },
-          take: 10,
-        },
+        rutaRecargos: true,
         _count: {
           select: {
             guiasViajes: true,
-            rutaTarifas: true,
             rutaPeajes: true,
+            rutaRecargos: true,
           },
         },
       },
@@ -342,8 +339,8 @@ export class RutasService {
           _count: {
             select: {
               guiasViajes: true,
-              rutaTarifas: true,
               rutaPeajes: true,
+              rutaRecargos: true,
             },
           },
         },
@@ -369,9 +366,9 @@ export class RutasService {
   async remove(id: string) {
     const ruta = await this.findOne(id);
 
-    if (ruta._count?.guiasViajes > 0 || ruta._count?.rutaTarifas > 0) {
+    if (ruta._count?.guiasViajes > 0) {
       throw new BadRequestException(
-        'No es posible eliminar la ruta debido a que tiene guías de viaje o tarifas asociadas. Puede desactivarla para restringir su uso.',
+        'No es posible eliminar la ruta debido a que tiene guías de viaje asociadas. Puede desactivarla para restringir su uso.',
       );
     }
 
