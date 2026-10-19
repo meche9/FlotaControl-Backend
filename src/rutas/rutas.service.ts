@@ -137,6 +137,7 @@ export class RutasService {
           puntoOrigen: {
             select: {
               idPunto: true,
+              codigoPuntoc: true,
               nombreSede: true,
               ciudad: true,
               estado: true,
@@ -146,6 +147,7 @@ export class RutasService {
           puntoDestino: {
             select: {
               idPunto: true,
+              codigoPuntoc: true,
               nombreSede: true,
               ciudad: true,
               estado: true,
@@ -195,6 +197,7 @@ export class RutasService {
         puntoOrigen: {
           select: {
             idPunto: true,
+            codigoPuntoc: true,
             nombreSede: true,
             ciudad: true,
             estado: true,
@@ -204,6 +207,7 @@ export class RutasService {
         puntoDestino: {
           select: {
             idPunto: true,
+            codigoPuntoc: true,
             nombreSede: true,
             ciudad: true,
             estado: true,
@@ -321,6 +325,7 @@ export class RutasService {
           puntoOrigen: {
             select: {
               idPunto: true,
+              codigoPuntoc: true,
               nombreSede: true,
               ciudad: true,
               estado: true,
@@ -330,6 +335,7 @@ export class RutasService {
           puntoDestino: {
             select: {
               idPunto: true,
+              codigoPuntoc: true,
               nombreSede: true,
               ciudad: true,
               estado: true,

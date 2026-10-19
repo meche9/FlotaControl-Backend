@@ -1,11 +1,11 @@
 model TipoDocumento {
-  idTipoDocumento     String               @id @default(uuid()) @map("id_tipo_documento") @db.VarChar(36)
-  nombreDocumento     String               @map("nombre_documento") @db.VarChar(100)
-  aplicaA             TipoDocumentoAplica  @map("aplica_a")
-  esObligatorio       Boolean              @default(true) @map("es_obligatorio")
-  activo              Boolean              @default(true)
+  idTipoDocumento String              @id @default(uuid()) @map("id_tipo_documento") @db.VarChar(36)
+  nombreDocumento String              @map("nombre_documento") @db.VarChar(100)
+  aplicaA         TipoDocumentoAplica @map("aplica_a")
+  esObligatorio   Boolean             @default(true) @map("es_obligatorio")
+  activo          Boolean             @default(true)
 
-  documentosVehiculos DocumentoVehiculo[]
+  documentosVehiculos   DocumentoVehiculo[]
   documentosConductores DocumentoConductor[]
 
   @@map("tipos_documentos")

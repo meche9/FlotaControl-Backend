@@ -1,10 +1,10 @@
 model Role {
-  id        String    @id @default(uuid()) @db.VarChar(36)
-  nombre    String    @unique @db.VarChar(50)
-  descripcion String? @db.VarChar(255)
-  creadoEn  DateTime  @default(now()) @map("creado_en")
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  nombre      String   @unique @db.VarChar(50)
+  descripcion String?  @db.VarChar(255)
+  creadoEn    DateTime @default(now()) @map("creado_en")
 
-  usuarios  Usuario[]
+  usuarios Usuario[]
 
   @@map("roles")
 }

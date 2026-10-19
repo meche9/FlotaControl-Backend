@@ -13,44 +13,42 @@ enum GuiaOrdenEstado {
   Cancelado
 }
 
-
 model GuiaViaje {
-  idOrden                 String              @id @default(uuid()) @map("id_orden") @db.VarChar(36)
-  nroTransporte           String?             @unique @map("nro_transporte") @db.VarChar(30)
-  idCliente               String              @map("id_cliente") @db.VarChar(36)
-  idRuta                  String              @map("id_ruta") @db.VarChar(36)
-  idPuntoOrigen           String              @map("id_punto_origen") @db.VarChar(36)
-  idPuntoDestino          String              @map("id_punto_destino") @db.VarChar(36)
-  idVehiculoMotriz        String?             @map("id_vehiculo_motriz") @db.VarChar(36)
-  idAcoplado              String?             @map("id_acoplado") @db.VarChar(36)
-  idConductor             String?             @map("id_conductor") @db.VarChar(36)
+  idOrden          String  @id @default(uuid()) @map("id_orden") @db.VarChar(36)
+  nroTransporte    String? @unique @map("nro_transporte") @db.VarChar(30)
+  idCliente        String  @map("id_cliente") @db.VarChar(36)
+  idRuta           String  @map("id_ruta") @db.VarChar(36)
+  idPuntoOrigen    String  @map("id_punto_origen") @db.VarChar(36)
+  idPuntoDestino   String  @map("id_punto_destino") @db.VarChar(36)
+  idVehiculoMotriz String? @map("id_vehiculo_motriz") @db.VarChar(36)
+  idAcoplado       String? @map("id_acoplado") @db.VarChar(36)
+  idConductor      String? @map("id_conductor") @db.VarChar(36)
 
-  fechaProgramadaCarga    DateTime            @map("fecha_programada_carga")
-  fechaSalidaReal         DateTime?           @map("fecha_salida_real")
-  fechaEntregaEstimada    DateTime            @map("fecha_entrega_estimada")
-  fechaEntregaReal        DateTime?           @map("fecha_entrega_real")
+  fechaProgramadaCarga DateTime  @map("fecha_programada_carga")
+  fechaSalidaReal      DateTime? @map("fecha_salida_real")
+  fechaEntregaEstimada DateTime  @map("fecha_entrega_estimada")
+  fechaEntregaReal     DateTime? @map("fecha_entrega_real")
 
-  moneda                  String              @default("USD") @db.VarChar(10)
-  montoFleteCliente       Decimal             @map("monto_flete_cliente") @db.Decimal(12, 2)
-  montoAnticipoConductor  Decimal             @default(0.00) @map("monto_anticipo_conductor") @db.Decimal(12, 2)
-  estadoFacturacion       GuiaFacturacion     @default(Sin_Facturar) @map("estado_facturacion")
-  estadoOrden             GuiaOrdenEstado     @default(Programado) @map("estado_orden")
-  observaciones           String?             @db.Text
+  moneda                 String          @default("USD") @db.VarChar(10)
+  montoFleteCliente      Decimal         @map("monto_flete_cliente") @db.Decimal(12, 2)
+  montoAnticipoConductor Decimal         @default(0.00) @map("monto_anticipo_conductor") @db.Decimal(12, 2)
+  estadoFacturacion      GuiaFacturacion @default(Sin_Facturar) @map("estado_facturacion")
+  estadoOrden            GuiaOrdenEstado @default(Programado) @map("estado_orden")
+  observaciones          String?         @db.Text
 
-  fechaCreacion           DateTime            @default(now()) @map("fecha_creacion")
-  fechaActualizacion      DateTime            @default(now()) @updatedAt @map("fecha_actualizacion")
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
+  fechaActualizacion DateTime @default(now()) @updatedAt @map("fecha_actualizacion")
 
-  cliente                 Cliente             @relation(fields: [idCliente], references: [idCliente], onDelete: Restrict)
-  ruta                    Ruta                @relation(fields: [idRuta], references: [idRuta], onDelete: Restrict)
-  puntoOrigen             PuntoCargaDescarga  @relation("GuiaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: Restrict)
-  puntoDestino            PuntoCargaDescarga  @relation("GuiaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: Restrict)
-  vehiculoMotriz          Vehicle?            @relation("GuiaMotriz", fields: [idVehiculoMotriz], references: [idVehiculo], onDelete: Restrict)
-  acoplado                Vehicle?            @relation("GuiaAcoplado", fields: [idAcoplado], references: [idVehiculo], onDelete: Restrict)
-  conductor               Conductor?          @relation(fields: [idConductor], references: [idConductor], onDelete: Restrict)
+  cliente        Cliente            @relation(fields: [idCliente], references: [idCliente], onDelete: Restrict)
+  ruta           Ruta               @relation(fields: [idRuta], references: [idRuta], onDelete: Restrict)
+  puntoOrigen    PuntoCargaDescarga @relation("GuiaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: Restrict)
+  puntoDestino   PuntoCargaDescarga @relation("GuiaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: Restrict)
+  vehiculoMotriz Vehicle?           @relation("GuiaMotriz", fields: [idVehiculoMotriz], references: [idVehiculo], onDelete: Restrict)
+  acoplado       Vehicle?           @relation("GuiaAcoplado", fields: [idAcoplado], references: [idVehiculo], onDelete: Restrict)
+  conductor      Conductor?         @relation(fields: [idConductor], references: [idConductor], onDelete: Restrict)
 
-  proformaDetalles        ProformaDetalle[]
-  guiasViajesRecargos     GuiaViajeRecargo[]
+  proformaDetalles    ProformaDetalle[]
+  guiasViajesRecargos GuiaViajeRecargo[]
 
   @@map("guias_viajes")
 }
-

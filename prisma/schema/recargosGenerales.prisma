@@ -1,0 +1,8 @@
+model RecargoGeneral {
+  idRecargo   String             @id @default(uuid()) @map("id_recargo") @db.VarChar(36)
+  concepto    String             @db.VarChar(100)
+  tipoCalculo RecargoTipoCalculo @default(Monto_Fijo) @map("tipo_calculo")
+  valor       Decimal            @default(0.00) @db.Decimal(10, 2)
+
+  @@map("recargos_generales")
+}

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { PuntosCargaService } from './puntosCargasDescargas.service.js';
 import { CreatePuntoCargaDto } from './dto/create-cargasdescargas.js';
 import { UpdatePuntoCargaDto } from './dto/update-cargasdescargas.js';
@@ -21,6 +21,16 @@ export class PuntosCargaController {
     @Get('cliente/:idCliente')
     findByCliente(@Param('idCliente') idCliente: string) {
         return this.puntosCargaService.findByCliente(idCliente);
+    }
+
+    @Get('validar-codigo/:idCliente/:codigo')
+    async validarCodigo(
+        @Param('idCliente') idCliente: string,
+        @Param('codigo') codigo: string,
+        @Query('excludeId') excludeId?: string,
+    ) {
+        const existe = await this.puntosCargaService.checkCodigoExists(idCliente, codigo, excludeId);
+        return { existe };
     }
 
     @Get(':id')

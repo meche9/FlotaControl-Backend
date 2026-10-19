@@ -6,27 +6,27 @@ enum RutaTipoCobro {
 }
 
 model Ruta {
-  idRuta                String              @id @default(uuid()) @map("id_ruta") @db.VarChar(36)
-  idCliente             String              @map("id_cliente") @db.VarChar(36)
-  nombreRuta            String              @map("nombre_ruta") @db.VarChar(150)
-  ciudadOrigen          String              @map("ciudad_origen") @db.VarChar(100)
-  ciudadDestino         String              @map("ciudad_destino") @db.VarChar(100)
-  idPuntoOrigen         String?             @map("id_punto_origen") @db.VarChar(36)
-  idPuntoDestino        String?             @map("id_punto_destino") @db.VarChar(36)
-  distanciaKm           Decimal             @default(0.00) @map("distancia_km") @db.Decimal(8, 2)
-  tiempoEstimadoHoras   Decimal?            @map("tiempo_estimado_horas") @db.Decimal(4, 1)
-  consumoEstimadoGasoil Decimal             @default(0.000000) @map("consumo_estimado_gasoil") @db.Decimal(20, 6)
-  montoTarifa           Decimal             @default(0.00) @map("monto_tarifa") @db.Decimal(12, 2)
-  tipoCobro             RutaTipoCobro       @default(Por_Viaje_Fijo) @map("tipo_cobro")
-  moneda                String              @default("USD") @map("moneda") @db.VarChar(10)
-  activo                Boolean             @default(true)
+  idRuta                String        @id @default(uuid()) @map("id_ruta") @db.VarChar(36)
+  idCliente             String        @map("id_cliente") @db.VarChar(36)
+  nombreRuta            String        @map("nombre_ruta") @db.VarChar(150)
+  ciudadOrigen          String        @map("ciudad_origen") @db.VarChar(100)
+  ciudadDestino         String        @map("ciudad_destino") @db.VarChar(100)
+  idPuntoOrigen         String?       @map("id_punto_origen") @db.VarChar(36)
+  idPuntoDestino        String?       @map("id_punto_destino") @db.VarChar(36)
+  distanciaKm           Decimal       @default(0.00) @map("distancia_km") @db.Decimal(8, 2)
+  tiempoEstimadoHoras   Decimal?      @map("tiempo_estimado_horas") @db.Decimal(4, 1)
+  consumoEstimadoGasoil Decimal       @default(0.000000) @map("consumo_estimado_gasoil") @db.Decimal(20, 6)
+  montoTarifa           Decimal       @default(0.00) @map("monto_tarifa") @db.Decimal(12, 2)
+  tipoCobro             RutaTipoCobro @default(Por_Viaje_Fijo) @map("tipo_cobro")
+  moneda                String        @default("USD") @map("moneda") @db.VarChar(10)
+  activo                Boolean       @default(true)
 
-  cliente               Cliente             @relation(fields: [idCliente], references: [idCliente], onDelete: Cascade)
-  puntoOrigen           PuntoCargaDescarga? @relation("RutaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: SetNull)
-  puntoDestino          PuntoCargaDescarga? @relation("RutaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: SetNull)
-  guiasViajes           GuiaViaje[]
-  rutaPeajes            RutaPeaje[]
-  rutaRecargos          RutaRecargo[]
+  cliente      Cliente             @relation(fields: [idCliente], references: [idCliente], onDelete: Cascade)
+  puntoOrigen  PuntoCargaDescarga? @relation("RutaOrigen", fields: [idPuntoOrigen], references: [idPunto], onDelete: SetNull)
+  puntoDestino PuntoCargaDescarga? @relation("RutaDestino", fields: [idPuntoDestino], references: [idPunto], onDelete: SetNull)
+  guiasViajes  GuiaViaje[]
+  rutaPeajes   RutaPeaje[]
+  rutaRecargos RutaRecargo[]
 
   @@map("rutas")
 }

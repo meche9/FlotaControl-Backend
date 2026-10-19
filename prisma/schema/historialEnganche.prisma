@@ -1,15 +1,15 @@
 model HistorialEnganche {
-  idHistorial             String    @id @default(uuid()) @map("id_historial") @db.VarChar(36)
-  idVehiculoMotriz        String    @map("id_vehiculo_motriz") @db.VarChar(36)
-  idAcoplado              String    @map("id_acoplado") @db.VarChar(36)
-  fechaEnganche           DateTime  @default(now()) @map("fecha_enganche")
-  fechaDesenganche        DateTime? @map("fecha_desenganche")
-  kilometrajeEnganche     Int?      @map("kilometraje_enganche")
-  kilometrajeDesenganche  Int?      @map("kilometraje_desenganche")
-  observaciones           String?   @db.VarChar(255)
+  idHistorial            String    @id @default(uuid()) @map("id_historial") @db.VarChar(36)
+  idVehiculoMotriz       String    @map("id_vehiculo_motriz") @db.VarChar(36)
+  idAcoplado             String    @map("id_acoplado") @db.VarChar(36)
+  fechaEnganche          DateTime  @default(now()) @map("fecha_enganche")
+  fechaDesenganche       DateTime? @map("fecha_desenganche")
+  kilometrajeEnganche    Int?      @map("kilometraje_enganche")
+  kilometrajeDesenganche Int?      @map("kilometraje_desenganche")
+  observaciones          String?   @db.VarChar(255)
 
-  vehiculoMotriz          Vehicle   @relation("MotrizEnganche", fields: [idVehiculoMotriz], references: [idVehiculo], onDelete: Restrict)
-  acoplado                Vehicle   @relation("AcopladoEnganche", fields: [idAcoplado], references: [idVehiculo], onDelete: Restrict)
+  vehiculoMotriz Vehicle @relation("MotrizEnganche", fields: [idVehiculoMotriz], references: [idVehiculo], onDelete: Restrict)
+  acoplado       Vehicle @relation("AcopladoEnganche", fields: [idAcoplado], references: [idVehiculo], onDelete: Restrict)
 
   @@map("historial_enganches")
 }

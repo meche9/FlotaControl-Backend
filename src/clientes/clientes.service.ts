@@ -52,6 +52,7 @@ export class ClientesService {
                 puntosCargaDescarga: {
                     select: {
                         idPunto: true,
+                        codigoPuntoc: true,
                         nombreSede: true,
                         ciudad: true,
                         estado: true,

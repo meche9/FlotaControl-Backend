@@ -9,7 +9,7 @@ model RutaPeaje {
   fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @default(now()) @updatedAt @map("fecha_actualizacion")
 
-  ruta               Ruta     @relation(fields: [idRuta], references: [idRuta], onDelete: Cascade, onUpdate: Cascade)
+  ruta Ruta @relation(fields: [idRuta], references: [idRuta], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("rutas_peajes")
 }

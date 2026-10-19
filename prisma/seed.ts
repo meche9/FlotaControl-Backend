@@ -15,11 +15,36 @@ const ROLES = [
 // Misma política que src/common/validators/password-policy.ts
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,64}$/;
 
+const CONCEPTOS_RECARGOS = [
+  { concepto: 'Pernocta en Hotel', tipoCalculo: 'Monto_Fijo', valor: 45.00 },
+  { concepto: 'Tasa Portuaria', tipoCalculo: 'Monto_Fijo', valor: 120.00 },
+  { concepto: 'Estacionamiento', tipoCalculo: 'Monto_Fijo', valor: 20.00 },
+  { concepto: 'Caleta', tipoCalculo: 'Monto_Fijo', valor: 35.00 },
+  { concepto: 'Viático de Conductor por Trayecto', tipoCalculo: 'Monto_Fijo', valor: 25.00 },
+  { concepto: 'Otros Gastos', tipoCalculo: 'Monto_Fijo', valor: 25.00 },
+];
+
 async function main() {
   for (const rol of ROLES) {
     await prisma.role.upsert({ where: { nombre: rol.nombre }, update: {}, create: rol });
   }
   console.log(`Roles verificados: ${ROLES.map((r) => r.nombre).join(', ')}`);
+
+  for (const item of CONCEPTOS_RECARGOS) {
+    const exist = await prisma.recargoGeneral.findFirst({
+      where: { concepto: item.concepto },
+    });
+    if (!exist) {
+      await prisma.recargoGeneral.create({
+        data: {
+          concepto: item.concepto,
+          tipoCalculo: item.tipoCalculo,
+          valor: item.valor,
+        },
+      });
+    }
+  }
+  console.log('Conceptos de recargos_generales verificados.');
 
   const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD;

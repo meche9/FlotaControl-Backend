@@ -20,11 +20,11 @@ async function seedRutas() {
   console.log('Cliente Polar ID:', polar.idCliente);
 
   const puntosData = [
-    { nombreSede: 'Planta San Joaquín - Silos Sur (Carabobo)', ciudad: 'San Joaquín', estado: 'Carabobo', direccion: 'Zona Industrial San Joaquín, Carretera Nacional' },
-    { nombreSede: 'C.D. Los Cortijos - Andén Central (Miranda)', ciudad: 'Caracas', estado: 'Miranda', direccion: 'Av. Diego Cisneros, Los Cortijos de Lourdes' },
-    { nombreSede: 'C.D. Turmero', ciudad: 'Turmero', estado: 'Aragua', direccion: 'Intercomunal Santiago Mariño, Turmero' },
-    { nombreSede: 'C.D. Barquisimeto', ciudad: 'Barquisimeto', estado: 'Lara', direccion: 'Zona Industrial II, Carrera 2' },
-    { nombreSede: 'C.D. Guarenas', ciudad: 'Guarenas', estado: 'Miranda', direccion: 'Zona Industrial Maturín, Guarenas' }
+    { codigoPuntoc: 'PT-SJ01', nombreSede: 'Planta San Joaquín - Silos Sur (Carabobo)', ciudad: 'San Joaquín', estado: 'Carabobo', direccion: 'Zona Industrial San Joaquín, Carretera Nacional' },
+    { codigoPuntoc: 'PT-LC01', nombreSede: 'C.D. Los Cortijos - Andén Central (Miranda)', ciudad: 'Caracas', estado: 'Miranda', direccion: 'Av. Diego Cisneros, Los Cortijos de Lourdes' },
+    { codigoPuntoc: 'PT-TM01', nombreSede: 'C.D. Turmero', ciudad: 'Turmero', estado: 'Aragua', direccion: 'Intercomunal Santiago Mariño, Turmero' },
+    { codigoPuntoc: 'PT-BQ01', nombreSede: 'C.D. Barquisimeto', ciudad: 'Barquisimeto', estado: 'Lara', direccion: 'Zona Industrial II, Carrera 2' },
+    { codigoPuntoc: 'PT-GU01', nombreSede: 'C.D. Guarenas', ciudad: 'Guarenas', estado: 'Miranda', direccion: 'Zona Industrial Maturín, Guarenas' }
   ];
 
   const puntosMap = {};
@@ -36,6 +36,7 @@ async function seedRutas() {
       exist = await prisma.puntoCargaDescarga.create({
         data: {
           idCliente: polar.idCliente,
+          codigoPuntoc: p.codigoPuntoc,
           nombreSede: p.nombreSede,
           ciudad: p.ciudad,
           estado: p.estado,

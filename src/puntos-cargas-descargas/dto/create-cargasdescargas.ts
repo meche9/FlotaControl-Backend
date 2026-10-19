@@ -16,6 +16,11 @@ export class CreatePuntoCargaDto {
     @MaxLength(100, { message: 'El nombre de la sede no puede exceder los 100 caracteres' })
     nombreSede: string;
 
+    @IsString()
+    @IsNotEmpty({ message: 'El código del punto es obligatorio' })
+    @MaxLength(10, { message: 'El código del punto no puede exceder los 10 caracteres' })
+    codigoPuntoc: string;
+
     @IsEnum(TipoPuntoDto, { message: 'El tipo de punto debe ser Origen, Destino o Ambos' })
     @IsOptional()
     tipoPunto?: TipoPuntoDto;
