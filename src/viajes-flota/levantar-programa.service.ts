@@ -1,16 +1,13 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import * as FormData from 'form-data';
+import { PrismaService } from '../prisma/prisma.service.js';
+import FormData from 'form-data';
 import axios from 'axios';
 
 @Injectable()
-export class SchedulesService {
+export class LevantarProgramaService {
     constructor(private readonly prisma: PrismaService) { }
 
-    /**
-     * Envía el PDF a Python y retorna la programación plana para la vista previa del frontend.
-     */
-    async getSchedulePreview(file: Express.Multer.File) {
+    async getSchedulePreview(file: any) {
         if (!file) {
             throw new HttpException('No se ha adjuntado ningún archivo PDF.', HttpStatus.BAD_REQUEST);
         }
@@ -22,15 +19,13 @@ export class SchedulesService {
         });
 
         try {
-            // 1. Llamada al microservicio de Python
             const pythonResponse = await axios.post('http://127.0.0.1:8000/extract-schedule', formData, {
                 headers: { ...formData.getHeaders() },
             });
 
             const rawTrips = pythonResponse.data.trips || [];
 
-            // 2. Mapeo directo de la data extraída para la pantalla de supervisión
-            const formattedTrips = rawTrips.map((trip, index) => ({
+            const formattedTrips = rawTrips.map((trip: any, index: number) => ({
                 id: `trip-${index + 1}`,
                 nroTransporte: trip.guia_viaje || 'S/N',
                 origenSalida: {
@@ -45,9 +40,8 @@ export class SchedulesService {
                 horaProgramadaCarga: trip.hora_i,
                 fechaEntregaEstimada: trip.fecha_f,
                 horaEntregaEstimada: trip.hora_f,
-                // En esta etapa el conductor viene directamente del texto extraído o se deja pendiente
-                conductorAsignado: null, // Si el PDF trae texto de conductor, se puede mapear aquí
-                estadoPendienteChofer: true, // Para marcar los que requieren asignación urgente como en tu UI
+                conductorAsignado: null,
+                estadoPendienteChofer: true,
                 observacion: trip.observacion || '',
             }));
 
@@ -56,19 +50,17 @@ export class SchedulesService {
                 trips: formattedTrips,
             };
 
-        } catch (error) {
+        } catch (error: unknown) {
+            const err = error as any;
+            const errorMsg = err.response?.data?.detail || err.message;
             throw new HttpException(
-                `Error al procesar el PDF en el extractor: ${error.message}`,
+                `Error al procesar el PDF en el extractor: ${errorMsg}`,
                 HttpStatus.INTERNAL_SERVER_ERROR,
             );
         }
     }
 
-    /**
-     * Endpoint final cuando el usuario confirma la pantalla de supervisión y guarda.
-     */
     async saveConfirmedSchedule(confirmedData: any[]) {
-        // Aquí puedes implementar la inserción masiva a tu GuiaViaje o tablas temporales según requieras
         return {
             success: true,
             message: 'Programación procesada y guardada correctamente.',
