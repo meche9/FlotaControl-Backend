@@ -9,6 +9,7 @@ import { ConductoresModule } from './conductores/conductores.module.js';
 import { ClientesModule } from './clientes/clientes.module.js';
 import { PuntosCargaModule } from './puntos-cargas-descargas/puntosCargasDescargas.module.js';
 import { RutasModule } from './rutas/rutas.module.js';
+import { ViajesFlotaModule } from './viajes-flota/viajes-flota.module.js';
 import { UsuariosModule } from './usuarios/usuarios.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard.js';
@@ -43,6 +44,7 @@ import { validateEnv } from './config/env.validation.js';
     ClientesModule,
     PuntosCargaModule,
     RutasModule,
+    ViajesFlotaModule,
   ],
   controllers: [],
   providers: [

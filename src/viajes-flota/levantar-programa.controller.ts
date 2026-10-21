@@ -4,8 +4,8 @@ import {
     Body,
     UseInterceptors,
     UploadedFile,
-    ParseFilePipe,
-    FileTypeValidator,
+    HttpException,
+    HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { LevantarProgramaService } from './levantar-programa.service.js';
@@ -16,21 +16,23 @@ export class LevantarProgramaController {
 
     @Post('preview')
     @UseInterceptors(FileInterceptor('file'))
-    async previewSchedule(
-        @UploadedFile(
-            new ParseFilePipe({
-                validators: [
-                    new FileTypeValidator({ fileType: 'application/pdf' }),
-                ],
-            }),
-        )
-        file: any,
-    ) {
+    async previewSchedule(@UploadedFile() file: any) {
+        if (!file) {
+            throw new HttpException('No se ha adjuntado ningún archivo.', HttpStatus.BAD_REQUEST);
+        }
+
+        const filename = (file.originalname || '').toLowerCase();
+        const isPdf = filename.endsWith('.pdf') || file.mimetype === 'application/pdf';
+
+        if (!isPdf) {
+            throw new HttpException('El archivo adjunto debe ser de formato PDF (.pdf).', HttpStatus.BAD_REQUEST);
+        }
+
         return await this.levantarProgramaService.getSchedulePreview(file);
     }
 
     @Post('confirm')
-    async confirmSchedule(@Body() data: any[]) {
+    async confirmSchedule(@Body() data: any) {
         return await this.levantarProgramaService.saveConfirmedSchedule(data);
     }
 }
