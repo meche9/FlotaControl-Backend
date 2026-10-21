@@ -1,4 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service.js';
 import FormData from 'form-data';
 import axios from 'axios';
@@ -128,7 +129,7 @@ export class LevantarProgramaService {
 
         // 4. Mapear y formatear cada viaje con verificación de colisión
         const formattedTrips = rawTrips.map((trip: any, index: number) => {
-            const nroGuia = (trip.guia_viaje || `TR-AUTO-${index + 1}`).trim();
+            const nroGuia = (trip.guia_viaje || `TR-AUTO-${Date.now().toString().slice(-4)}-${index + 1}`).trim();
             const nroKey = nroGuia.toUpperCase();
             const colisionEncontrada = guiasMap.get(nroKey);
             const yaExiste = Boolean(colisionEncontrada);
@@ -144,7 +145,7 @@ export class LevantarProgramaService {
             const nroRetornoSugerido = `RET-${nroDigitos}-A`;
 
             return {
-                id: `trip-${index + 1}`,
+                id: `trip-${randomUUID()}`,
                 nroTransporte: nroGuia,
                 origenSalida: {
                     codigo: codOrigen || (puntoOrigenBd ? puntoOrigenBd.codigoPuntoc : 'S/C'),
@@ -238,6 +239,7 @@ export class LevantarProgramaService {
                 nombreCompleto: `${c.nombres} ${c.apellidos}`,
                 telefono: c.telefono,
                 estado: c.estado,
+                placaVehiculoHabitual: c.vehiculoHabitual?.placa || null,
                 vehiculoHabitual: c.vehiculoHabitual
                     ? `${c.vehiculoHabitual.marca} ${c.vehiculoHabitual.modelo || ''} (${c.vehiculoHabitual.placa})`
                     : null,
