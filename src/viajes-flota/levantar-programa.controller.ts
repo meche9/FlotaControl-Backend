@@ -1,6 +1,10 @@
 import {
     Controller,
+    Get,
     Post,
+    Patch,
+    Query,
+    Param,
     Body,
     UseInterceptors,
     UploadedFile,
@@ -34,5 +38,40 @@ export class LevantarProgramaController {
     @Post('confirm')
     async confirmSchedule(@Body() data: any) {
         return await this.levantarProgramaService.saveConfirmedSchedule(data);
+    }
+
+    @Get('programados')
+    async getViajesProgramados(
+        @Query('idCliente') idCliente?: string,
+        @Query('fechaInicio') fechaInicio?: string,
+        @Query('fechaFin') fechaFin?: string,
+        @Query('estadoOrden') estadoOrden?: string,
+    ) {
+        return await this.levantarProgramaService.getViajesProgramados({
+            idCliente,
+            fechaInicio,
+            fechaFin,
+            estadoOrden,
+        });
+    }
+
+    @Patch('asignar-conductor')
+    async asignarConductor(@Body() body: { idOrden: string; idConductor: string | null }) {
+        return await this.levantarProgramaService.asignarConductor(body.idOrden, body.idConductor);
+    }
+
+    @Patch('liberar-conductor/:idConductor')
+    async liberarConductor(@Param('idConductor') idConductor: string) {
+        return await this.levantarProgramaService.liberarConductor(idConductor);
+    }
+
+    @Patch('actualizar-observacion')
+    async actualizarObservacion(@Body() body: { idOrden: string; observaciones: string | null }) {
+        return await this.levantarProgramaService.actualizarObservacion(body.idOrden, body.observaciones);
+    }
+
+    @Patch('cancelar-viaje')
+    async cancelarViaje(@Body() body: { idOrden: string; observacion?: string }) {
+        return await this.levantarProgramaService.cancelarViaje(body.idOrden, body.observacion);
     }
 }
