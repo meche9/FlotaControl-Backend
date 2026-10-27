@@ -25,8 +25,8 @@ model Vehicle {
   // 2. FK del acoplado asignado (auto-relación) convertida a UUID
   idAcopladoActual String? @unique @map("id_acoplado_actual") @db.VarChar(36)
 
-  fechaCreacion      DateTime @default(now()) @map("fecha_creacion") @db.Timestamp()
-  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion") @db.Timestamp()
+  fechaCreacion      DateTime @default(now()) @map("fecha_creacion") @db.Timestamp(3)
+  fechaActualizacion DateTime @updatedAt @map("fecha_actualizacion") @db.Timestamp(3)
 
   // Relaciones
   clasificacion       ClasificacionVehiculo @relation(fields: [idClasificacion], references: [idClasificacion], onDelete: Restrict, onUpdate: Restrict)
