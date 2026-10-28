@@ -1,4 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service.js';
 import FormData from 'form-data';
@@ -6,7 +7,10 @@ import axios from 'axios';
 
 @Injectable()
 export class LevantarProgramaService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly config: ConfigService,
+    ) { }
 
     /**
      * Procesa el PDF mediante el microservicio extractor en Python
@@ -25,8 +29,10 @@ export class LevantarProgramaService {
 
         let rawTrips: any[] = [];
 
+        const extractorUrl = this.config.get<string>('EXTRACTOR_URL') ?? 'http://127.0.0.1:8000';
+
         try {
-            const pythonResponse = await axios.post('http://127.0.0.1:8000/extract-schedule', formData, {
+            const pythonResponse = await axios.post(`${extractorUrl}/extract-schedule`, formData, {
                 headers: { ...formData.getHeaders() },
                 timeout: 30000,
             });
