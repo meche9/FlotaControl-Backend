@@ -46,10 +46,33 @@ export function crearPrismaFalso() {
     usuario: {
       findMany: vi.fn(async () => usuarios.map((u) => conRol(u))),
       findUnique: vi.fn(async ({ where }: { where: Fila }) => conRol(buscarUsuario(where))),
+      create: vi.fn(async ({ data }: { data: Fila }) => {
+        const fila = {
+          id: randomUUID(),
+          telefono: null,
+          foto: null,
+          estado: 'activo',
+          ultimoAcceso: null,
+          tokenVersion: 0,
+          creadoEn: new Date(),
+          actualizadoEn: new Date(),
+          ...data,
+        };
+        usuarios.push(fila);
+        return conRol(fila);
+      }),
       update: vi.fn(async ({ where, data }: { where: Fila; data: Fila }) => {
         const usuario = buscarUsuario(where)!;
         aplicar(usuario, data);
         return conRol(usuario);
+      }),
+    },
+    role: {
+      findFirst: vi.fn(async () => roles[1] ?? roles[0]),
+      create: vi.fn(async ({ data }: { data: Fila }) => {
+        const fila = { id: randomUUID(), creadoEn: new Date(), ...data };
+        roles.push(fila);
+        return { ...fila };
       }),
     },
     refreshToken: {

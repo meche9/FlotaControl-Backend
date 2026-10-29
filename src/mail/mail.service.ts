@@ -43,6 +43,30 @@ export class MailService {
       : null;
   }
 
+  async enviarCodigoRegistro(destinatario: Destinatario, codigo: string, minutosValidez: number) {
+    const nombre = escapeHtml(destinatario.nombre);
+    await this.enviar(destinatario.email, 'Código de verificación - FleetFlow', {
+      texto:
+        `Hola ${destinatario.nombre},\n\n` +
+        `Su código de verificación para completar su registro en FleetFlow es:\n\n` +
+        `${codigo}\n\n` +
+        `Este código es válido por ${minutosValidez} minutos.\n` +
+        `Si usted no solicitó este registro, ignore este mensaje.`,
+      html:
+        `<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">` +
+        `<h2 style="color: #0f172a; margin-top: 0;">Verifica tu correo electrónico</h2>` +
+        `<p style="color: #475569;">Hola <strong>${nombre}</strong>,</p>` +
+        `<p style="color: #475569;">Hemos recibido tu solicitud de registro. Ingresa el siguiente código de 6 dígitos para verificar tu cuenta:</p>` +
+        `<div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; text-align: center; margin: 24px 0; border-radius: 8px;">` +
+        `<span style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #f97316;">${escapeHtml(codigo)}</span>` +
+        `</div>` +
+        `<p style="color: #64748b; font-size: 13px;">Este código tiene una vigencia de ${minutosValidez} minutos y expira automáticamente.</p>` +
+        `<p style="color: #94a3b8; font-size: 12px; margin-bottom: 0;">Si no solicitaste una cuenta en FleetFlow, puedes ignorar este mensaje.</p>` +
+        `</div>`,
+      enlaceDev: `Código OTP: ${codigo}`,
+    });
+  }
+
   async enviarRestablecimiento(destinatario: Destinatario, enlace: string, minutosValidez: number) {
     const nombre = escapeHtml(destinatario.nombre);
     await this.enviar(destinatario.email, 'Restablecer contraseña - FleetFlow', {

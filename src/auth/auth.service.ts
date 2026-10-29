@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -16,6 +17,9 @@ import { MailService } from '../mail/mail.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { RegisterRequestDto } from './dto/register-request.dto.js';
+import { RegisterVerifyDto } from './dto/register-verify.dto.js';
+import { RegisterResendDto } from './dto/register-resend.dto.js';
 import type { AccessTokenPayload, ClientInfo } from './interfaces/auth.types.js';
 
 type UsuarioConRol = Prisma.UsuarioGetPayload<{ include: { rol: true } }>;
@@ -48,6 +52,17 @@ interface IntentosFallidos {
   lockedUntil: number | null;
 }
 
+interface PendingRegistration {
+  nombreCompleto: string;
+  email: string;
+  passwordHash: string;
+  telefono?: string;
+  codeHash: string;
+  expiresAt: number;
+  resendAvailableAt: number;
+  attempts: number;
+}
+
 // Mensajes genéricos: no revelan si el email existe (OWASP A07)
 const CREDENCIALES_INVALIDAS = 'Credenciales inválidas';
 const SESION_INVALIDA = 'Sesión inválida o expirada. Inicie sesión nuevamente.';
@@ -72,6 +87,9 @@ export class AuthService {
 
   // En memoria: suficiente para una instancia. Con varias instancias usar Redis.
   private readonly failedAttempts = new Map<string, IntentosFallidos>();
+  private readonly pendingRegistrations = new Map<string, PendingRegistration>();
+  private readonly OTP_TTL_MS = 10 * 60 * 1000; // 10 minutos (caducidad garantizada)
+  private readonly OTP_RESEND_COOLDOWN_MS = 60 * 1000; // 60 segundos de cooldown
 
   private readonly bcryptRounds: number;
   private readonly accessTtlSeconds: number;
@@ -297,6 +315,203 @@ export class AuthService {
     }
 
     return this.toUsuarioPublico(usuario);
+  }
+
+  // ─── Registro de credenciales de usuario (Onboarding) ───────────────
+
+  /**
+   * Paso 1 de 2: Solicitar código OTP para crear cuenta.
+   * Valida disponibilidad del email, hashea la contraseña y emite un código de 6 dígitos con vigencia de 10 min.
+   */
+  async solicitarCodigoRegistro(dto: RegisterRequestDto) {
+    const email = dto.email.trim().toLowerCase();
+
+    // 1. Verificar si ya existe usuario con ese email
+    const existente = await this.prisma.usuario.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (existente) {
+      throw new ConflictException('Ya existe un usuario registrado con este correo electrónico corporativo.');
+    }
+
+    // 2. Cooldown para evitar saturación
+    const previo = this.pendingRegistrations.get(email);
+    const ahora = Date.now();
+    if (previo && ahora < previo.resendAvailableAt) {
+      const restantes = Math.ceil((previo.resendAvailableAt - ahora) / 1000);
+      throw new BadRequestException(`Debe esperar ${restantes} segundos antes de solicitar otro código.`);
+    }
+
+    // 3. Generar código OTP criptográfico de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = sha256(code);
+    const passwordHash = await bcrypt.hash(dto.password, this.bcryptRounds);
+
+    this.pendingRegistrations.set(email, {
+      nombreCompleto: dto.nombreCompleto.trim(),
+      email,
+      passwordHash,
+      telefono: dto.telefono?.trim(),
+      codeHash,
+      expiresAt: ahora + this.OTP_TTL_MS,
+      resendAvailableAt: ahora + this.OTP_RESEND_COOLDOWN_MS,
+      attempts: 0,
+    });
+
+    // 4. Enviar correo con el código
+    void this.mailService
+      .enviarCodigoRegistro({ email, nombre: dto.nombreCompleto.trim() }, code, 10)
+      .catch((err: Error) =>
+        this.logger.error(`Error enviando correo con código de registro a ${email}: ${err.message}`),
+      );
+
+    this.logger.log(`Código OTP emitido para registro: ${email}`);
+
+    return {
+      message: 'Código de verificación de 6 dígitos enviado exitosamente a su correo.',
+      email,
+      expiresInSeconds: Math.floor(this.OTP_TTL_MS / 1000),
+      devCode: process.env.NODE_ENV !== 'production' ? code : undefined,
+    };
+  }
+
+  /**
+   * Reenviar código OTP de 6 dígitos
+   */
+  async reenviarCodigoRegistro(dto: RegisterResendDto) {
+    const email = dto.email.trim().toLowerCase();
+    const pending = this.pendingRegistrations.get(email);
+
+    if (!pending) {
+      throw new BadRequestException('No hay una solicitud de registro activa para este correo. Inicie el registro.');
+    }
+
+    const ahora = Date.now();
+    if (ahora < pending.resendAvailableAt) {
+      const restantes = Math.ceil((pending.resendAvailableAt - ahora) / 1000);
+      throw new BadRequestException(`Espere ${restantes} segundos antes de solicitar un nuevo código.`);
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    pending.codeHash = sha256(code);
+    pending.expiresAt = ahora + this.OTP_TTL_MS;
+    pending.resendAvailableAt = ahora + this.OTP_RESEND_COOLDOWN_MS;
+    pending.attempts = 0;
+
+    void this.mailService
+      .enviarCodigoRegistro({ email, nombre: pending.nombreCompleto }, code, 10)
+      .catch((err: Error) =>
+        this.logger.error(`Error reenviando código de registro a ${email}: ${err.message}`),
+      );
+
+    this.logger.log(`Código OTP reenviado para registro: ${email}`);
+
+    return {
+      message: 'Nuevo código de verificación enviado.',
+      email,
+      expiresInSeconds: Math.floor(this.OTP_TTL_MS / 1000),
+      devCode: process.env.NODE_ENV !== 'production' ? code : undefined,
+    };
+  }
+
+  /**
+   * Paso 2 de 2: Verificar código y crear cuenta de usuario.
+   * Emite sesión JWT para acceso directo sin necesidad de segundo login.
+   */
+  async verificarCodigoRegistro(dto: RegisterVerifyDto, client: ClientInfo = {}): Promise<SesionEmitida> {
+    const email = dto.email.trim().toLowerCase();
+    const pending = this.pendingRegistrations.get(email);
+
+    if (!pending) {
+      throw new BadRequestException('La sesión de registro no existe o ha expirado. Por favor inicie nuevamente.');
+    }
+
+    const ahora = Date.now();
+    if (ahora > pending.expiresAt) {
+      this.pendingRegistrations.delete(email);
+      throw new BadRequestException('El código de verificación ha expirado. Solicite un nuevo código.');
+    }
+
+    if (pending.attempts >= 5) {
+      this.pendingRegistrations.delete(email);
+      throw new BadRequestException('Demasiados intentos fallidos. Por seguridad, inicie el registro nuevamente.');
+    }
+
+    if (sha256(dto.code.trim()) !== pending.codeHash) {
+      pending.attempts += 1;
+      const restantes = 5 - pending.attempts;
+      throw new BadRequestException(`Código incorrecto. Le quedan ${restantes} intento(s).`);
+    }
+
+    // Doble verificación: que no exista en DB
+    const existente = await this.prisma.usuario.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (existente) {
+      this.pendingRegistrations.delete(email);
+      throw new ConflictException('Ya existe un usuario registrado con este correo electrónico.');
+    }
+
+    // Separar nombreCompleto en nombre y apellido
+    const { nombre, apellido } = this.separarNombreCompleto(pending.nombreCompleto);
+
+    // Obtener rol por defecto para usuario registrado
+    let rol = await this.prisma.role.findFirst({
+      where: { nombre: { in: ['Operador', 'Supervisor', 'Administrador'] } },
+      orderBy: { creadoEn: 'asc' },
+    });
+
+    if (!rol) {
+      rol = await this.prisma.role.findFirst();
+    }
+
+    if (!rol) {
+      rol = await this.prisma.role.create({
+        data: {
+          nombre: 'Operador',
+          descripcion: 'Rol base para usuarios registrados',
+        },
+      });
+    }
+
+    const usuario = await this.prisma.usuario.create({
+      data: {
+        nombre,
+        apellido,
+        email: pending.email,
+        passwordHash: pending.passwordHash,
+        telefono: pending.telefono || null,
+        rolId: rol.id,
+        estado: 'activo',
+        ultimoAcceso: new Date(),
+      },
+      include: { rol: true },
+    });
+
+    this.pendingRegistrations.delete(email);
+    this.logger.log(`Usuario creado exitosamente mediante onboarding: ID ${usuario.id} (${email})`);
+
+    return this.emitirSesion(usuario, {
+      familia: randomUUID(),
+      recordar: true,
+      client,
+    });
+  }
+
+  private separarNombreCompleto(nombreCompleto: string): { nombre: string; apellido: string } {
+    const partes = nombreCompleto.trim().split(/\s+/).filter(Boolean);
+    if (partes.length === 0) {
+      return { nombre: 'Usuario', apellido: 'FleetFlow' };
+    }
+    if (partes.length === 1) {
+      return { nombre: partes[0], apellido: partes[0] };
+    }
+    const nombre = partes[0];
+    const apellido = partes.slice(1).join(' ');
+    return { nombre, apellido };
   }
 
   // ─── Emisión de tokens ──────────────────────────────────────────────

@@ -26,6 +26,9 @@ import { OPCIONES_SUBIDA_IMAGEN, type ArchivoImagen } from '../imagenes/imagenes
 import { LoginDto } from './dto/login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { RegisterRequestDto } from './dto/register-request.dto.js';
+import { RegisterVerifyDto } from './dto/register-verify.dto.js';
+import { RegisterResendDto } from './dto/register-resend.dto.js';
 import { Public } from './decorators/public.decorator.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
 import type { AuthenticatedUser, ClientInfo } from './interfaces/auth.types.js';
@@ -52,6 +55,44 @@ export class AuthController {
       sameSite: config.get<'strict' | 'lax' | 'none'>('COOKIE_SAMESITE'),
       path: REFRESH_COOKIE_PATH, // solo viaja a los endpoints de /auth
     };
+  }
+
+  /**
+   * POST /auth/register/request-code — Paso 1: Onboarding y solicitud de código OTP
+   */
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('register/request-code')
+  @HttpCode(HttpStatus.OK)
+  async registerRequest(@Body() dto: RegisterRequestDto) {
+    return this.authService.solicitarCodigoRegistro(dto);
+  }
+
+  /**
+   * POST /auth/register/resend-code — Reenvío de código OTP
+   */
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @Post('register/resend-code')
+  @HttpCode(HttpStatus.OK)
+  async registerResend(@Body() dto: RegisterResendDto) {
+    return this.authService.reenviarCodigoRegistro(dto);
+  }
+
+  /**
+   * POST /auth/register/verify-code — Paso 2: Verificación de código y activación de cuenta
+   */
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('register/verify-code')
+  @HttpCode(HttpStatus.CREATED)
+  async registerVerify(
+    @Body() dto: RegisterVerifyDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const sesion = await this.authService.verificarCodigoRegistro(dto, this.clientInfo(req));
+    return this.responderSesion(res, sesion);
   }
 
   /**

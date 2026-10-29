@@ -70,6 +70,7 @@ export class LevantarProgramaService {
                 idOrden: true,
                 nroTransporte: true,
                 estadoOrden: true,
+                fisico: true,
                 fechaProgramadaCarga: true,
                 conductor: {
                     select: {
@@ -214,6 +215,7 @@ export class LevantarProgramaService {
                 puntoRegreso: codOrigen ? `[${codOrigen}] ${trip.punto_origen || 'Planta Origen'}` : 'Planta Origen',
                 estadoPendienteChofer: true,
                 observacion: trip.observacion || '',
+                fisico: Boolean(trip.fisico ?? false),
                 // Bandera de verificación de existencia en guias_viajes
                 yaExiste,
                 colision: yaExiste,
@@ -221,6 +223,7 @@ export class LevantarProgramaService {
                     ? {
                           idOrden: colisionEncontrada.idOrden,
                           estadoOrden: colisionEncontrada.estadoOrden,
+                          fisico: colisionEncontrada.fisico,
                           fechaProgramadaCarga: colisionEncontrada.fechaProgramadaCarga,
                           conductorAsignado: colisionEncontrada.conductor
                               ? `${colisionEncontrada.conductor.nombres} ${colisionEncontrada.conductor.apellidos}`
@@ -605,6 +608,7 @@ export class LevantarProgramaService {
                     montoAnticipoConductor: 0.0,
                     estadoFacturacion: 'Sin_Facturar',
                     estadoOrden: 'Programado',
+                    fisico: Boolean(trip.fisico ?? false),
                     observaciones: (() => {
                         let obs = trip.observacion ?? trip.observaciones;
                         if ((!obs || !String(obs).trim()) && trip.id && String(trip.id).startsWith('manual')) {
@@ -621,6 +625,7 @@ export class LevantarProgramaService {
                     montoFleteCliente: true,
                     fechaProgramadaCarga: true,
                     observaciones: true,
+                    fisico: true,
                 },
             });
 
@@ -644,6 +649,7 @@ export class LevantarProgramaService {
         fechaInicio?: string;
         fechaFin?: string;
         estadoOrden?: string;
+        fisico?: string | boolean;
     }) {
         const where: any = {};
 
@@ -660,6 +666,10 @@ export class LevantarProgramaService {
             }
         } else {
             where.estadoOrden = { in: ['Programado', 'Cancelado'] };
+        }
+
+        if (filter.fisico !== undefined && filter.fisico !== null && filter.fisico !== '') {
+            where.fisico = filter.fisico === true || filter.fisico === 'true' || filter.fisico === '1';
         }
 
         if (filter.fechaInicio || filter.fechaFin) {
@@ -818,6 +828,31 @@ export class LevantarProgramaService {
                 observaciones: nuevaObservacion,
                 idConductor: null,
                 idVehiculoMotriz: null,
+            },
+        });
+    }
+
+    /**
+     * Actualiza el estado fisico de una orden de viaje en guias_viajes (documento fisico recibido).
+     */
+    async actualizarFisico(idOrden: string, fisico: boolean) {
+        if (!idOrden) {
+            throw new HttpException('idOrden es requerido', HttpStatus.BAD_REQUEST);
+        }
+
+        const guia = await this.prisma.guiaViaje.findUnique({
+            where: { idOrden },
+            select: { idOrden: true },
+        });
+
+        if (!guia) {
+            throw new HttpException(`La orden de viaje con ID '${idOrden}' no existe.`, HttpStatus.NOT_FOUND);
+        }
+
+        return await this.prisma.guiaViaje.update({
+            where: { idOrden },
+            data: {
+                fisico: Boolean(fisico),
             },
         });
     }

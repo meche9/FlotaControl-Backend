@@ -46,12 +46,14 @@ export class LevantarProgramaController {
         @Query('fechaInicio') fechaInicio?: string,
         @Query('fechaFin') fechaFin?: string,
         @Query('estadoOrden') estadoOrden?: string,
+        @Query('fisico') fisico?: string,
     ) {
         return await this.levantarProgramaService.getViajesProgramados({
             idCliente,
             fechaInicio,
             fechaFin,
             estadoOrden,
+            fisico,
         });
     }
 
@@ -68,6 +70,11 @@ export class LevantarProgramaController {
     @Patch('actualizar-observacion')
     async actualizarObservacion(@Body() body: { idOrden: string; observaciones: string | null }) {
         return await this.levantarProgramaService.actualizarObservacion(body.idOrden, body.observaciones);
+    }
+
+    @Patch('actualizar-fisico')
+    async actualizarFisico(@Body() body: { idOrden: string; fisico: boolean }) {
+        return await this.levantarProgramaService.actualizarFisico(body.idOrden, body.fisico);
     }
 
     @Patch('cancelar-viaje')

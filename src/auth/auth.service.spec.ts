@@ -23,7 +23,11 @@ function crearJwtService() {
 describe('AuthService', () => {
   let db: ReturnType<typeof crearPrismaFalso>;
   let jwt: JwtService;
-  let mail: { enviarRestablecimiento: ReturnType<typeof vi.fn>; enviarAvisoCambioPassword: ReturnType<typeof vi.fn> };
+  let mail: {
+    enviarRestablecimiento: ReturnType<typeof vi.fn>;
+    enviarAvisoCambioPassword: ReturnType<typeof vi.fn>;
+    enviarCodigoRegistro: ReturnType<typeof vi.fn>;
+  };
   let service: AuthService;
 
   beforeAll(() => Logger.overrideLogger(false));
@@ -35,6 +39,7 @@ describe('AuthService', () => {
     mail = {
       enviarRestablecimiento: vi.fn(async () => undefined),
       enviarAvisoCambioPassword: vi.fn(async () => undefined),
+      enviarCodigoRegistro: vi.fn(async () => undefined),
     };
     const config = new ConfigService({ BCRYPT_ROUNDS: 4, FRONTEND_URL: 'http://localhost:5173' });
     service = new AuthService(db.prisma as any, jwt, mail as any, config);
@@ -193,6 +198,75 @@ describe('AuthService', () => {
       await expect(service.resetPassword({ token, newPassword: 'NuevaClave#2026' })).rejects.toThrow(
         'El enlace de restablecimiento es inválido o ha expirado',
       );
+    });
+  });
+
+  describe('registro (onboarding)', () => {
+    const REGISTRO_EMAIL = 'nuevo.usuario@empresa.com';
+
+    it('solicita código de registro y envía correo con OTP de 6 dígitos', async () => {
+      const res = await service.solicitarCodigoRegistro({
+        nombreCompleto: 'Alejandro Silva Logistics',
+        email: REGISTRO_EMAIL,
+        password: PASSWORD,
+        telefono: '+584121234567',
+      });
+
+      expect(res.email).toBe(REGISTRO_EMAIL);
+      expect(res.devCode).toMatch(/^\d{6}$/);
+      expect(mail.enviarCodigoRegistro).toHaveBeenCalledWith(
+        { email: REGISTRO_EMAIL, nombre: 'Alejandro Silva Logistics' },
+        res.devCode,
+        10,
+      );
+    });
+
+    it('rechaza registro con email ya existente', async () => {
+      await expect(
+        service.solicitarCodigoRegistro({
+          nombreCompleto: 'Super Admin',
+          email: EMAIL,
+          password: PASSWORD,
+        }),
+      ).rejects.toThrow('Ya existe un usuario registrado');
+    });
+
+    it('verifica código correcto y crea usuario emitiendo sesión JWT', async () => {
+      const res = await service.solicitarCodigoRegistro({
+        nombreCompleto: 'Alejandro Silva',
+        email: REGISTRO_EMAIL,
+        password: PASSWORD,
+      });
+
+      const sesion = await service.verificarCodigoRegistro({
+        email: REGISTRO_EMAIL,
+        code: res.devCode!,
+      });
+
+      expect(sesion.accessToken).toBeDefined();
+      expect(sesion.user.email).toBe(REGISTRO_EMAIL);
+      expect(sesion.user.nombre).toBe('Alejandro');
+      expect(sesion.user.apellido).toBe('Silva');
+      expect(sesion.user.rol.nombre).toBe('Operador');
+
+      const creado = db.usuarios.find((u) => u.email === REGISTRO_EMAIL);
+      expect(creado).toBeDefined();
+      expect(creado!.nombre).toBe('Alejandro');
+    });
+
+    it('rechaza código incorrecto', async () => {
+      await service.solicitarCodigoRegistro({
+        nombreCompleto: 'Alejandro Silva',
+        email: REGISTRO_EMAIL,
+        password: PASSWORD,
+      });
+
+      await expect(
+        service.verificarCodigoRegistro({
+          email: REGISTRO_EMAIL,
+          code: '000000',
+        }),
+      ).rejects.toThrow('Código incorrecto');
     });
   });
 });

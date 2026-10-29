@@ -34,6 +34,7 @@ model GuiaViaje {
   montoAnticipoConductor Decimal         @default(0.00) @map("monto_anticipo_conductor") @db.Decimal(12, 2)
   estadoFacturacion      GuiaFacturacion @default(Sin_Facturar) @map("estado_facturacion")
   estadoOrden            GuiaOrdenEstado @default(Programado) @map("estado_orden")
+  fisico                 Boolean         @default(false) @map("fisico")
   observaciones          String?         @db.Text
 
   fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
