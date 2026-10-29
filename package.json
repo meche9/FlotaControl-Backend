@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
+  "packageManager": "pnpm@10.29.3",
   "prisma": {
     "schema": "prisma/schema"
   },
