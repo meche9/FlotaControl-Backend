@@ -387,7 +387,10 @@ export class LevantarProgramaService {
         const payloadIdCliente = payload?.idCliente || payload?.clienteDetectado?.idCliente;
 
         const [primerCliente, primerPunto, primerRuta] = await Promise.all([
-            this.prisma.cliente.findFirst({ select: { idCliente: true, razonSocial: true } }),
+            this.prisma.cliente.findFirst({
+                orderBy: { fechaCreacion: 'asc' },
+                select: { idCliente: true, razonSocial: true },
+            }),
             this.prisma.puntoCargaDescarga.findFirst({ select: { idPunto: true, idCliente: true } }),
             this.prisma.ruta.findFirst({ select: { idRuta: true, montoTarifa: true } }),
         ]);
@@ -665,7 +668,11 @@ export class LevantarProgramaService {
 
         if (filter.estadoOrden && filter.estadoOrden.trim()) {
             const est = filter.estadoOrden.trim().toLowerCase();
-            if (est === 'todos' || est === 'programado,cancelado') {
+            if (est === 'todos') {
+                // Sin filtro por estadoOrden
+            } else if (est === 'excluyendo_cancelados' || est === 'activos') {
+                where.estadoOrden = { not: 'Cancelado' };
+            } else if (est === 'programado,cancelado') {
                 where.estadoOrden = { in: ['Programado', 'Cancelado'] };
             } else {
                 where.estadoOrden = filter.estadoOrden.trim();
@@ -703,14 +710,34 @@ export class LevantarProgramaService {
                 },
                 puntoOrigen: true,
                 puntoDestino: true,
-                ruta: true,
+                ruta: {
+                    include: {
+                        rutaRecargos: true,
+                    },
+                },
                 conductor: {
                     include: {
                         vehiculoHabitual: true,
                     },
                 },
-                vehiculoMotriz: true,
-                acoplado: true,
+                vehiculoMotriz: {
+                    include: {
+                        clasificacion: true,
+                    },
+                },
+                acoplado: {
+                    include: {
+                        clasificacion: true,
+                    },
+                },
+                guiasViajesRecargos: {
+                    include: {
+                        recargo: true,
+                    },
+                    orderBy: {
+                        fechaCreacion: 'asc',
+                    },
+                },
             },
             orderBy: {
                 fechaProgramadaCarga: 'asc',
@@ -861,5 +888,290 @@ export class LevantarProgramaService {
                 fisico: Boolean(fisico),
             },
         });
+    }
+
+    /**
+     * Asigna o actualiza recursos (vehículo motriz / chuto, acoplado / batea, conductor) a un viaje.
+     */
+    async asignarRecursos(body: {
+        idOrden: string;
+        idVehiculoMotriz?: string | null;
+        idAcoplado?: string | null;
+        idConductor?: string | null;
+    }) {
+        const { idOrden, idVehiculoMotriz, idAcoplado, idConductor } = body;
+        if (!idOrden) {
+            throw new HttpException('idOrden es requerido', HttpStatus.BAD_REQUEST);
+        }
+
+        const guia = await this.prisma.guiaViaje.findUnique({ where: { idOrden } });
+        if (!guia) {
+            throw new HttpException('Orden de viaje no encontrada', HttpStatus.NOT_FOUND);
+        }
+
+        const data: any = {};
+        if (idVehiculoMotriz !== undefined) data.idVehiculoMotriz = idVehiculoMotriz || null;
+        if (idAcoplado !== undefined) data.idAcoplado = idAcoplado || null;
+        if (idConductor !== undefined) data.idConductor = idConductor || null;
+
+        return await this.prisma.guiaViaje.update({
+            where: { idOrden },
+            data,
+            include: {
+                cliente: true,
+                puntoOrigen: true,
+                puntoDestino: true,
+                ruta: { include: { rutaRecargos: true } },
+                conductor: { include: { vehiculoHabitual: true } },
+                vehiculoMotriz: { include: { clasificacion: true } },
+                acoplado: { include: { clasificacion: true } },
+                guiasViajesRecargos: { include: { recargo: true } },
+            },
+        });
+    }
+
+    /**
+     * Genera la plancha agregando un viaje de retorno debajo del viaje inicial,
+     * permitiendo cambiar el punto de regreso y solicitando el ingreso de nro de transporte.
+     */
+    async crearViajeRetorno(data: {
+        idOrdenOrigen: string;
+        nroTransporte: string;
+        idPuntoDestino?: string;
+        fechaProgramadaCarga?: string;
+        montoFlete?: number;
+        observaciones?: string;
+    }) {
+        const { idOrdenOrigen, nroTransporte, idPuntoDestino, fechaProgramadaCarga, montoFlete, observaciones } = data;
+
+        if (!idOrdenOrigen || !nroTransporte || !nroTransporte.trim()) {
+            throw new HttpException('idOrdenOrigen y nroTransporte son obligatorios para generar la plancha de retorno', HttpStatus.BAD_REQUEST);
+        }
+
+        const guiaOriginal = await this.prisma.guiaViaje.findUnique({
+            where: { idOrden: idOrdenOrigen },
+            include: { puntoOrigen: true, puntoDestino: true },
+        });
+
+        if (!guiaOriginal) {
+            throw new HttpException('La orden de viaje inicial no existe', HttpStatus.NOT_FOUND);
+        }
+
+        const nroTrim = nroTransporte.trim();
+        const yaExiste = await this.prisma.guiaViaje.findUnique({
+            where: { nroTransporte: nroTrim },
+        });
+        if (yaExiste) {
+            throw new HttpException(`El Nº de Transporte '${nroTrim}' ya está registrado. Ingrese un número distinto.`, HttpStatus.CONFLICT);
+        }
+
+        // Origen del retorno = Destino del viaje original
+        const origenRetorno = guiaOriginal.idPuntoDestino;
+        // Destino del retorno = Seleccionado o por defecto el Origen del viaje original
+        const destinoRetorno = (idPuntoDestino && idPuntoDestino.trim()) || guiaOriginal.idPuntoOrigen;
+
+        // Buscar o crear ruta de retorno
+        let rutaRetorno = await this.prisma.ruta.findFirst({
+            where: {
+                idPuntoOrigen: origenRetorno,
+                idPuntoDestino: destinoRetorno,
+            },
+        });
+
+        if (!rutaRetorno) {
+            const pOrig = await this.prisma.puntoCargaDescarga.findUnique({ where: { idPunto: origenRetorno } });
+            const pDest = await this.prisma.puntoCargaDescarga.findUnique({ where: { idPunto: destinoRetorno } });
+
+            rutaRetorno = await this.prisma.ruta.create({
+                data: {
+                    idCliente: guiaOriginal.idCliente,
+                    nombreRuta: `Retorno: ${pOrig?.nombreSede || 'Origen'} — ${pDest?.nombreSede || 'Destino'}`.slice(0, 150),
+                    ciudadOrigen: pOrig?.ciudad || 'Origen',
+                    ciudadDestino: pDest?.ciudad || 'Destino',
+                    idPuntoOrigen: origenRetorno,
+                    idPuntoDestino: destinoRetorno,
+                    distanciaKm: 150.0,
+                    montoTarifa: montoFlete !== undefined ? montoFlete : 0.0,
+                    tipoCobro: 'Por_Viaje_Fijo',
+                    moneda: 'USD',
+                    activo: true,
+                },
+            });
+        }
+
+        const fechaSalida = fechaProgramadaCarga
+            ? new Date(fechaProgramadaCarga)
+            : new Date(guiaOriginal.fechaEntregaEstimada || guiaOriginal.fechaProgramadaCarga);
+        const fechaEntrega = new Date(fechaSalida.getTime() + 8 * 3600 * 1000);
+
+        const retObsTag = `[RETORNO_DE:${guiaOriginal.idOrden}]`;
+        const finalObs = observaciones && observaciones.trim()
+            ? `${retObsTag} ${observaciones.trim()}`
+            : `${retObsTag} Plancha de Retorno (Guía Inicial: ${guiaOriginal.nroTransporte || guiaOriginal.idOrden})`;
+
+        return await this.prisma.guiaViaje.create({
+            data: {
+                nroTransporte: nroTrim,
+                idCliente: guiaOriginal.idCliente,
+                idRuta: rutaRetorno.idRuta,
+                idPuntoOrigen: origenRetorno,
+                idPuntoDestino: destinoRetorno,
+                idVehiculoMotriz: guiaOriginal.idVehiculoMotriz,
+                idAcoplado: guiaOriginal.idAcoplado,
+                idConductor: guiaOriginal.idConductor,
+                fechaProgramadaCarga: isNaN(fechaSalida.getTime()) ? new Date() : fechaSalida,
+                fechaSalidaReal: null,
+                fechaEntregaEstimada: isNaN(fechaEntrega.getTime()) ? new Date() : fechaEntrega,
+                fechaEntregaReal: null,
+                moneda: 'USD',
+                montoFleteCliente: montoFlete !== undefined ? montoFlete : Number(rutaRetorno.montoTarifa || 0),
+                montoAnticipoConductor: 0,
+                estadoFacturacion: 'Sin_Facturar',
+                estadoOrden: 'Programado',
+                fisico: false,
+                observaciones: finalObs,
+            },
+            include: {
+                cliente: true,
+                puntoOrigen: true,
+                puntoDestino: true,
+                ruta: { include: { rutaRecargos: true } },
+                conductor: { include: { vehiculoHabitual: true } },
+                vehiculoMotriz: { include: { clasificacion: true } },
+                acoplado: { include: { clasificacion: true } },
+                guiasViajesRecargos: { include: { recargo: true } },
+            },
+        });
+    }
+
+    /**
+     * Obtiene los recargos asignados a un viaje desde la tabla guias_viajes_recargos.
+     */
+    async getRecargosViaje(idOrden: string) {
+        if (!idOrden) {
+            throw new HttpException('idOrden es requerido', HttpStatus.BAD_REQUEST);
+        }
+
+        return await this.prisma.guiaViajeRecargo.findMany({
+            where: { idOrden },
+            include: {
+                recargo: true,
+            },
+            orderBy: {
+                fechaCreacion: 'asc',
+            },
+        });
+    }
+
+    /**
+     * Sincroniza / guarda los recargos asignados a un viaje en la tabla guias_viajes_recargos.
+     */
+    async guardarRecargosViaje(
+        idOrden: string,
+        recargos: Array<{
+            idViajeRecargo?: string;
+            idRecargo?: string | null;
+            concepto?: string;
+            monto: number | string;
+            observaciones?: string | null;
+            estado?: 'Pendiente' | 'Procesado' | 'Rechazado';
+        }>,
+    ) {
+        if (!idOrden) {
+            throw new HttpException('idOrden es requerido', HttpStatus.BAD_REQUEST);
+        }
+
+        const viaje = await this.prisma.guiaViaje.findUnique({
+            where: { idOrden },
+            include: { ruta: true },
+        });
+
+        if (!viaje) {
+            throw new HttpException('Orden de viaje no encontrada', HttpStatus.NOT_FOUND);
+        }
+
+        return await this.prisma.$transaction(async (tx) => {
+            // Eliminar registros actuales para sincronizar la nueva lista completa
+            await tx.guiaViajeRecargo.deleteMany({
+                where: { idOrden },
+            });
+
+            if (Array.isArray(recargos) && recargos.length > 0) {
+                for (const r of recargos) {
+                    let idRecargoToUse = r.idRecargo || null;
+                    const montoVal = Number(r.monto) || 0;
+
+                    // Si se suministró concepto y no idRecargo, buscar o vincular en rutas_recargos
+                    if (!idRecargoToUse && r.concepto && r.concepto.trim() && viaje.idRuta) {
+                        let rutaRec = await tx.rutaRecargo.findFirst({
+                            where: {
+                                idRuta: viaje.idRuta,
+                                concepto: { equals: r.concepto.trim() },
+                            },
+                        });
+
+                        if (!rutaRec) {
+                            rutaRec = await tx.rutaRecargo.create({
+                                data: {
+                                    idRuta: viaje.idRuta,
+                                    concepto: r.concepto.trim(),
+                                    tipoCalculo: 'Monto_Fijo',
+                                    valor: montoVal,
+                                },
+                            });
+                        }
+                        idRecargoToUse = rutaRec.idRecargo;
+                    }
+
+                    await tx.guiaViajeRecargo.create({
+                        data: {
+                            idOrden,
+                            idRecargo: idRecargoToUse,
+                            monto: montoVal,
+                            estado: r.estado || 'Pendiente',
+                            observaciones: r.observaciones ? String(r.observaciones).trim() : null,
+                        },
+                    });
+                }
+            }
+
+            return await tx.guiaViajeRecargo.findMany({
+                where: { idOrden },
+                include: {
+                    recargo: true,
+                },
+                orderBy: {
+                    fechaCreacion: 'asc',
+                },
+            });
+        });
+    }
+
+    /**
+     * Elimina un recargo individual de guias_viajes_recargos.
+     */
+    async eliminarRecargoViaje(idViajeRecargo: string) {
+        if (!idViajeRecargo) {
+            throw new HttpException('idViajeRecargo es requerido', HttpStatus.BAD_REQUEST);
+        }
+
+        return await this.prisma.guiaViajeRecargo.delete({
+            where: { idViajeRecargo },
+        });
+    }
+
+    /**
+     * Catálogo combinado de recargos disponibles (de rutas_recargos y recargos_generales).
+     */
+    async getCatalogoRecargos(idRuta?: string) {
+        const [generales, deRuta] = await Promise.all([
+            this.prisma.recargoGeneral.findMany({ orderBy: { concepto: 'asc' } }),
+            idRuta ? this.prisma.rutaRecargo.findMany({ where: { idRuta }, orderBy: { concepto: 'asc' } }) : Promise.resolve([]),
+        ]);
+
+        return {
+            generales,
+            deRuta,
+        };
     }
 }

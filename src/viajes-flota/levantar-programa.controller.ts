@@ -3,6 +3,7 @@ import {
     Get,
     Post,
     Patch,
+    Delete,
     Query,
     Param,
     Body,
@@ -60,6 +61,60 @@ export class LevantarProgramaController {
     @Patch('asignar-conductor')
     async asignarConductor(@Body() body: { idOrden: string; idConductor: string | null }) {
         return await this.levantarProgramaService.asignarConductor(body.idOrden, body.idConductor);
+    }
+
+    @Patch('asignar-recursos')
+    async asignarRecursos(@Body() body: {
+        idOrden: string;
+        idVehiculoMotriz?: string | null;
+        idAcoplado?: string | null;
+        idConductor?: string | null;
+    }) {
+        return await this.levantarProgramaService.asignarRecursos(body);
+    }
+
+    @Post('crear-retorno')
+    async crearViajeRetorno(@Body() body: {
+        idOrdenOrigen: string;
+        nroTransporte: string;
+        idPuntoDestino?: string;
+        fechaProgramadaCarga?: string;
+        montoFlete?: number;
+        observaciones?: string;
+    }) {
+        return await this.levantarProgramaService.crearViajeRetorno(body);
+    }
+
+    @Get('recargos-catalogo')
+    async getCatalogoRecargos(@Query('idRuta') idRuta?: string) {
+        return await this.levantarProgramaService.getCatalogoRecargos(idRuta);
+    }
+
+    @Get(':idOrden/recargos')
+    async getRecargosViaje(@Param('idOrden') idOrden: string) {
+        return await this.levantarProgramaService.getRecargosViaje(idOrden);
+    }
+
+    @Post(':idOrden/recargos')
+    async guardarRecargosViaje(
+        @Param('idOrden') idOrden: string,
+        @Body() body: {
+            recargos: Array<{
+                idViajeRecargo?: string;
+                idRecargo?: string | null;
+                concepto?: string;
+                monto: number | string;
+                observaciones?: string | null;
+                estado?: 'Pendiente' | 'Procesado' | 'Rechazado';
+            }>;
+        },
+    ) {
+        return await this.levantarProgramaService.guardarRecargosViaje(idOrden, body.recargos || []);
+    }
+
+    @Delete('recargos/:idViajeRecargo')
+    async eliminarRecargoViaje(@Param('idViajeRecargo') idViajeRecargo: string) {
+        return await this.levantarProgramaService.eliminarRecargoViaje(idViajeRecargo);
     }
 
     @Patch('liberar-conductor/:idConductor')
