@@ -227,14 +227,14 @@ export class LevantarProgramaService {
                 colision: yaExiste,
                 colisionDetalle: colisionEncontrada
                     ? {
-                          idOrden: colisionEncontrada.idOrden,
-                          estadoOrden: colisionEncontrada.estadoOrden,
-                          fisico: colisionEncontrada.fisico,
-                          fechaProgramadaCarga: colisionEncontrada.fechaProgramadaCarga,
-                          conductorAsignado: colisionEncontrada.conductor
-                              ? `${colisionEncontrada.conductor.nombres} ${colisionEncontrada.conductor.apellidos}`
-                              : null,
-                      }
+                        idOrden: colisionEncontrada.idOrden,
+                        estadoOrden: colisionEncontrada.estadoOrden,
+                        fisico: colisionEncontrada.fisico,
+                        fechaProgramadaCarga: colisionEncontrada.fechaProgramadaCarga,
+                        conductorAsignado: colisionEncontrada.conductor
+                            ? `${colisionEncontrada.conductor.nombres} ${colisionEncontrada.conductor.apellidos}`
+                            : null,
+                    }
                     : null,
             };
         });
@@ -299,7 +299,7 @@ export class LevantarProgramaService {
 
         formattedTrips.sort((a, b) => {
             return parseSortTimestamp(a.fechaProgramadaCarga, a.horaProgramadaCarga) -
-                   parseSortTimestamp(b.fechaProgramadaCarga, b.horaProgramadaCarga);
+                parseSortTimestamp(b.fechaProgramadaCarga, b.horaProgramadaCarga);
         });
 
         const colisionesCount = formattedTrips.filter((t: any) => t.yaExiste).length;
@@ -332,11 +332,11 @@ export class LevantarProgramaService {
                 idCliente: p.idCliente,
                 cliente: p.cliente
                     ? {
-                          idCliente: p.cliente.idCliente,
-                          razonSocial: p.cliente.razonSocial,
-                          nombreComercial: p.cliente.nombreComercial || p.cliente.razonSocial,
-                          rif: p.cliente.rif,
-                      }
+                        idCliente: p.cliente.idCliente,
+                        razonSocial: p.cliente.razonSocial,
+                        nombreComercial: p.cliente.nombreComercial || p.cliente.razonSocial,
+                        rif: p.cliente.rif,
+                    }
                     : null,
             })),
         };
@@ -590,10 +590,26 @@ export class LevantarProgramaService {
             if (!idVehiculoMotriz && trip.idConductor) {
                 const conductor = await this.prisma.conductor.findUnique({
                     where: { idConductor: trip.idConductor },
-                    select: { idVehiculoHabitual: true },
+                    select: {
+                        idVehiculoHabitual: true,
+                        vehiculoHabitual: {
+                            select: { idAcopladoActual: true },
+                        },
+                    },
                 });
                 if (conductor?.idVehiculoHabitual) {
                     idVehiculoMotriz = conductor.idVehiculoHabitual;
+                }
+                if (!idAcoplado && conductor?.vehiculoHabitual?.idAcopladoActual) {
+                    idAcoplado = conductor.vehiculoHabitual.idAcopladoActual;
+                }
+            } else if (idVehiculoMotriz && !idAcoplado) {
+                const vehiculo = await this.prisma.vehicle.findUnique({
+                    where: { idVehiculo: idVehiculoMotriz },
+                    select: { idAcopladoActual: true },
+                });
+                if (vehiculo?.idAcopladoActual) {
+                    idAcoplado = vehiculo.idAcopladoActual;
                 }
             }
 
@@ -747,27 +763,47 @@ export class LevantarProgramaService {
 
     /**
      * Asigna o remueve un conductor a una orden de viaje en guias_viajes.
+     * Registra automáticamente el vehículo motriz habitual y su acoplado actual (id_acoplado_actual de la tabla vehiculos).
      */
-    async asignarConductor(idOrden: string, idConductor: string | null) {
+    async asignarConductor(
+        idOrden: string,
+        idConductor: string | null,
+        idVehiculoMotrizParam?: string | null,
+        idAcopladoParam?: string | null,
+    ) {
         if (!idOrden) {
             throw new HttpException('idOrden es requerido', HttpStatus.BAD_REQUEST);
         }
 
-        let idVehiculoMotriz: string | null | undefined = undefined;
+        let idVehiculoMotriz: string | null = null;
+        let idAcoplado: string | null = null;
 
         if (idConductor) {
             const conductor = await this.prisma.conductor.findUnique({
                 where: { idConductor },
-                select: { idVehiculoHabitual: true },
+                select: {
+                    idVehiculoHabitual: true,
+                    vehiculoHabitual: {
+                        select: {
+                            idVehiculo: true,
+                            idAcopladoActual: true,
+                        },
+                    },
+                },
             });
             if (!conductor) {
                 throw new HttpException(`El conductor con ID '${idConductor}' no existe en la base de datos`, HttpStatus.BAD_REQUEST);
             }
-            if (conductor?.idVehiculoHabitual) {
-                idVehiculoMotriz = conductor.idVehiculoHabitual;
+            idVehiculoMotriz = conductor.idVehiculoHabitual || idVehiculoMotrizParam || null;
+            idAcoplado = conductor.vehiculoHabitual?.idAcopladoActual || idAcopladoParam || null;
+
+            if (idVehiculoMotriz && !idAcoplado) {
+                const vehiculo = await this.prisma.vehicle.findUnique({
+                    where: { idVehiculo: idVehiculoMotriz },
+                    select: { idAcopladoActual: true },
+                });
+                idAcoplado = vehiculo?.idAcopladoActual || null;
             }
-        } else {
-            idVehiculoMotriz = null;
         }
 
         try {
@@ -775,7 +811,8 @@ export class LevantarProgramaService {
                 where: { idOrden },
                 data: {
                     idConductor: idConductor || null,
-                    ...(idVehiculoMotriz !== undefined ? { idVehiculoMotriz } : {}),
+                    idVehiculoMotriz,
+                    idAcoplado,
                 },
                 include: {
                     conductor: {
@@ -784,6 +821,7 @@ export class LevantarProgramaService {
                         },
                     },
                     vehiculoMotriz: true,
+                    acoplado: true,
                 },
             });
         } catch (error: any) {
@@ -810,6 +848,7 @@ export class LevantarProgramaService {
             data: {
                 idConductor: null,
                 idVehiculoMotriz: null,
+                idAcoplado: null,
             },
         });
 
@@ -861,6 +900,7 @@ export class LevantarProgramaService {
                 observaciones: nuevaObservacion,
                 idConductor: null,
                 idVehiculoMotriz: null,
+                idAcoplado: null,
             },
         });
     }
@@ -914,6 +954,35 @@ export class LevantarProgramaService {
         if (idAcoplado !== undefined) data.idAcoplado = idAcoplado || null;
         if (idConductor !== undefined) data.idConductor = idConductor || null;
 
+        if (idConductor !== undefined) {
+            if (data.idConductor) {
+                const conductor = await this.prisma.conductor.findUnique({
+                    where: { idConductor: data.idConductor },
+                    select: {
+                        idVehiculoHabitual: true,
+                        vehiculoHabitual: {
+                            select: { idAcopladoActual: true },
+                        },
+                    },
+                });
+                if (idVehiculoMotriz === undefined) {
+                    data.idVehiculoMotriz = conductor?.idVehiculoHabitual || null;
+                }
+                if (idAcoplado === undefined) {
+                    data.idAcoplado = conductor?.vehiculoHabitual?.idAcopladoActual || null;
+                }
+            } else {
+                if (idVehiculoMotriz === undefined) data.idVehiculoMotriz = null;
+                if (idAcoplado === undefined) data.idAcoplado = null;
+            }
+        } else if (data.idVehiculoMotriz && idAcoplado === undefined) {
+            const vehiculo = await this.prisma.vehicle.findUnique({
+                where: { idVehiculo: data.idVehiculoMotriz },
+                select: { idAcopladoActual: true },
+            });
+            data.idAcoplado = vehiculo?.idAcopladoActual || null;
+        }
+
         return await this.prisma.guiaViaje.update({
             where: { idOrden },
             data,
@@ -965,18 +1034,41 @@ export class LevantarProgramaService {
             throw new HttpException(`El Nº de Transporte '${nroTrim}' ya está registrado. Ingrese un número distinto.`, HttpStatus.CONFLICT);
         }
 
-        // Origen del retorno = Destino del viaje original
+        // Origen del retorno (B) = Destino del viaje original
         const origenRetorno = guiaOriginal.idPuntoDestino;
-        // Destino del retorno = Seleccionado o por defecto el Origen del viaje original
+        // Destino del retorno (C) = Seleccionado o por defecto el Origen del viaje original
         const destinoRetorno = (idPuntoDestino && idPuntoDestino.trim()) || guiaOriginal.idPuntoOrigen;
 
-        // Buscar o crear ruta de retorno
-        let rutaRetorno = await this.prisma.ruta.findFirst({
+        // Buscar primero la ruta en sentido contrario (C -> B) que es la registrada en la tabla rutas
+        const rutaContraria = await this.prisma.ruta.findFirst({
             where: {
-                idPuntoOrigen: origenRetorno,
-                idPuntoDestino: destinoRetorno,
+                idPuntoOrigen: destinoRetorno,
+                idPuntoDestino: origenRetorno,
             },
+            orderBy: { activo: 'desc' },
         });
+
+        // Buscar si existe ruta directa (B -> C) o usar la ruta contraria (C -> B) registrada
+        let rutaRetorno =
+            rutaContraria ||
+            (await this.prisma.ruta.findFirst({
+                where: {
+                    idPuntoOrigen: origenRetorno,
+                    idPuntoDestino: destinoRetorno,
+                },
+            }));
+
+        const tarifaSegunRuta =
+            rutaContraria?.montoTarifa !== undefined && rutaContraria?.montoTarifa !== null
+                ? Number(rutaContraria.montoTarifa)
+                : rutaRetorno?.montoTarifa !== undefined && rutaRetorno?.montoTarifa !== null
+                    ? Number(rutaRetorno.montoTarifa)
+                    : Number(guiaOriginal.montoFleteCliente || 0);
+
+        const montoFleteFinal =
+            montoFlete !== undefined && montoFlete !== null && !isNaN(Number(montoFlete))
+                ? Number(montoFlete)
+                : tarifaSegunRuta;
 
         if (!rutaRetorno) {
             const pOrig = await this.prisma.puntoCargaDescarga.findUnique({ where: { idPunto: origenRetorno } });
@@ -991,7 +1083,7 @@ export class LevantarProgramaService {
                     idPuntoOrigen: origenRetorno,
                     idPuntoDestino: destinoRetorno,
                     distanciaKm: 150.0,
-                    montoTarifa: montoFlete !== undefined ? montoFlete : 0.0,
+                    montoTarifa: montoFleteFinal,
                     tipoCobro: 'Por_Viaje_Fijo',
                     moneda: 'USD',
                     activo: true,
@@ -999,14 +1091,18 @@ export class LevantarProgramaService {
             });
         }
 
-        const fechaSalida = fechaProgramadaCarga
-            ? new Date(fechaProgramadaCarga)
-            : new Date(guiaOriginal.fechaEntregaEstimada || guiaOriginal.fechaProgramadaCarga);
-        const fechaEntrega = new Date(fechaSalida.getTime() + 8 * 3600 * 1000);
+        // Tomar exactamente la misma fecha_programada_carga del viaje inicial para todos los campos de fecha de la plancha
+        const fechaBaseViaje = guiaOriginal.fechaProgramadaCarga
+            ? new Date(guiaOriginal.fechaProgramadaCarga)
+            : fechaProgramadaCarga
+                ? new Date(fechaProgramadaCarga)
+                : new Date();
+        const fechaMismaViaje = isNaN(fechaBaseViaje.getTime()) ? new Date() : fechaBaseViaje;
 
         const retObsTag = `[RETORNO_DE:${guiaOriginal.idOrden}]`;
-        const finalObs = observaciones && observaciones.trim()
-            ? `${retObsTag} ${observaciones.trim()}`
+        const obsLimpia = observaciones ? observaciones.replace(/^\[RETORNO_DE:[^\]]+\]\s*/i, '').trim() : '';
+        const finalObs = obsLimpia
+            ? `${retObsTag} ${obsLimpia}`
             : `${retObsTag} Plancha de Retorno (Guía Inicial: ${guiaOriginal.nroTransporte || guiaOriginal.idOrden})`;
 
         return await this.prisma.guiaViaje.create({
@@ -1019,16 +1115,118 @@ export class LevantarProgramaService {
                 idVehiculoMotriz: guiaOriginal.idVehiculoMotriz,
                 idAcoplado: guiaOriginal.idAcoplado,
                 idConductor: guiaOriginal.idConductor,
-                fechaProgramadaCarga: isNaN(fechaSalida.getTime()) ? new Date() : fechaSalida,
-                fechaSalidaReal: null,
-                fechaEntregaEstimada: isNaN(fechaEntrega.getTime()) ? new Date() : fechaEntrega,
-                fechaEntregaReal: null,
+                fechaProgramadaCarga: fechaMismaViaje,
+                fechaSalidaReal: fechaMismaViaje,
+                fechaEntregaEstimada: fechaMismaViaje,
+                fechaEntregaReal: fechaMismaViaje,
                 moneda: 'USD',
-                montoFleteCliente: montoFlete !== undefined ? montoFlete : Number(rutaRetorno.montoTarifa || 0),
+                montoFleteCliente: montoFleteFinal,
                 montoAnticipoConductor: 0,
                 estadoFacturacion: 'Sin_Facturar',
                 estadoOrden: 'Programado',
                 fisico: false,
+                observaciones: finalObs,
+            },
+            include: {
+                cliente: true,
+                puntoOrigen: true,
+                puntoDestino: true,
+                ruta: { include: { rutaRecargos: true } },
+                conductor: { include: { vehiculoHabitual: true } },
+                vehiculoMotriz: { include: { clasificacion: true } },
+                acoplado: { include: { clasificacion: true } },
+                guiasViajesRecargos: { include: { recargo: true } },
+            },
+        });
+    }
+
+    /**
+     * Actualiza los datos de una plancha de retorno existente en guias_viajes,
+     * recalculando la ruta y tarifa a partir de la ruta inversa (C -> B) si cambia el destino.
+     */
+    async actualizarViajeRetorno(data: {
+        idOrden: string;
+        nroTransporte: string;
+        idPuntoDestino?: string;
+        montoFlete?: number;
+        observaciones?: string;
+    }) {
+        const { idOrden, nroTransporte, idPuntoDestino, montoFlete, observaciones } = data;
+
+        if (!idOrden || !nroTransporte || !nroTransporte.trim()) {
+            throw new HttpException('idOrden y nroTransporte son obligatorios para editar la plancha de retorno', HttpStatus.BAD_REQUEST);
+        }
+
+        const guiaPlancha = await this.prisma.guiaViaje.findUnique({
+            where: { idOrden },
+        });
+
+        if (!guiaPlancha) {
+            throw new HttpException('La plancha de retorno no existe', HttpStatus.NOT_FOUND);
+        }
+
+        const nroTrim = nroTransporte.trim();
+        const colision = await this.prisma.guiaViaje.findFirst({
+            where: {
+                nroTransporte: nroTrim,
+                NOT: { idOrden },
+            },
+        });
+
+        if (colision) {
+            throw new HttpException(`El Nº de Transporte '${nroTrim}' ya está registrado en otra guía.`, HttpStatus.CONFLICT);
+        }
+
+        const origenRetorno = guiaPlancha.idPuntoOrigen;
+        const destinoRetorno = (idPuntoDestino && idPuntoDestino.trim()) || guiaPlancha.idPuntoDestino;
+
+        // Buscar la ruta contraria (C -> B) registrada en la tabla rutas
+        const rutaContraria = await this.prisma.ruta.findFirst({
+            where: {
+                idPuntoOrigen: destinoRetorno,
+                idPuntoDestino: origenRetorno,
+            },
+            orderBy: { activo: 'desc' },
+        });
+
+        let rutaRetorno =
+            rutaContraria ||
+            (await this.prisma.ruta.findFirst({
+                where: {
+                    idPuntoOrigen: origenRetorno,
+                    idPuntoDestino: destinoRetorno,
+                },
+            }));
+
+        const tarifaSegunRuta =
+            rutaContraria?.montoTarifa !== undefined && rutaContraria?.montoTarifa !== null
+                ? Number(rutaContraria.montoTarifa)
+                : rutaRetorno?.montoTarifa !== undefined && rutaRetorno?.montoTarifa !== null
+                    ? Number(rutaRetorno.montoTarifa)
+                    : Number(guiaPlancha.montoFleteCliente || 0);
+
+        const montoFleteFinal =
+            montoFlete !== undefined && montoFlete !== null && !isNaN(Number(montoFlete))
+                ? Number(montoFlete)
+                : tarifaSegunRuta;
+
+        const idRutaFinal = rutaRetorno ? rutaRetorno.idRuta : guiaPlancha.idRuta;
+
+        // Preservar la etiqueta [RETORNO_DE:...] del viaje padre en las observaciones
+        const matchTag = (guiaPlancha.observaciones || '').match(/^(\[RETORNO_DE:[^\]]+\])/);
+        const retObsTag = matchTag ? matchTag[1] : '[RETORNO]';
+        const obsLimpia = observaciones !== undefined
+            ? observaciones.replace(/^\[RETORNO_DE:[^\]]+\]\s*/i, '').trim()
+            : (guiaPlancha.observaciones || '').replace(/^\[RETORNO_DE:[^\]]+\]\s*/i, '').trim();
+        const finalObs = obsLimpia ? `${retObsTag} ${obsLimpia}` : `${retObsTag} Plancha de Retorno`;
+
+        return await this.prisma.guiaViaje.update({
+            where: { idOrden },
+            data: {
+                nroTransporte: nroTrim,
+                idPuntoDestino: destinoRetorno,
+                idRuta: idRutaFinal,
+                montoFleteCliente: montoFleteFinal,
                 observaciones: finalObs,
             },
             include: {

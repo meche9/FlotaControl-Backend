@@ -39,7 +39,10 @@ export class ClientesService {
 
     async findAll() {
         return this.prisma.cliente.findMany({
-            orderBy: { fechaCreacion: 'asc' },
+            orderBy: [
+                { fechaCreacion: 'asc' },
+                { idCliente: 'asc' },
+            ],
             include: {
                 _count: {
                     select: {

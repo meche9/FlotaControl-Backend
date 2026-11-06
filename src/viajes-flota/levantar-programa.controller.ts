@@ -59,8 +59,21 @@ export class LevantarProgramaController {
     }
 
     @Patch('asignar-conductor')
-    async asignarConductor(@Body() body: { idOrden: string; idConductor: string | null }) {
-        return await this.levantarProgramaService.asignarConductor(body.idOrden, body.idConductor);
+    async asignarConductor(
+        @Body()
+        body: {
+            idOrden: string;
+            idConductor: string | null;
+            idVehiculoMotriz?: string | null;
+            idAcoplado?: string | null;
+        },
+    ) {
+        return await this.levantarProgramaService.asignarConductor(
+            body.idOrden,
+            body.idConductor,
+            body.idVehiculoMotriz,
+            body.idAcoplado,
+        );
     }
 
     @Patch('asignar-recursos')
@@ -83,6 +96,17 @@ export class LevantarProgramaController {
         observaciones?: string;
     }) {
         return await this.levantarProgramaService.crearViajeRetorno(body);
+    }
+
+    @Patch('actualizar-retorno')
+    async actualizarViajeRetorno(@Body() body: {
+        idOrden: string;
+        nroTransporte: string;
+        idPuntoDestino?: string;
+        montoFlete?: number;
+        observaciones?: string;
+    }) {
+        return await this.levantarProgramaService.actualizarViajeRetorno(body);
     }
 
     @Get('recargos-catalogo')
