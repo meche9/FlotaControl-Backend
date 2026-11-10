@@ -4,12 +4,18 @@ enum RecargoTipoCalculo {
   Por_Hora   @map("Por Hora")
 }
 
+enum RecargoMoneda {
+  Bs
+  USD
+}
+
 model RutaRecargo {
   idRecargo   String             @id @default(uuid()) @map("id_recargo") @db.VarChar(36)
   idRuta      String             @map("id_ruta") @db.VarChar(36)
   concepto    String             @db.VarChar(100)
   tipoCalculo RecargoTipoCalculo @default(Monto_Fijo) @map("tipo_calculo")
   valor       Decimal            @db.Decimal(10, 2)
+  moneda      RecargoMoneda      @default(USD) @map("moneda")
 
   ruta             Ruta               @relation(fields: [idRuta], references: [idRuta], onDelete: Cascade, onUpdate: Cascade)
   proformaRecargos ProformaRecargo[]

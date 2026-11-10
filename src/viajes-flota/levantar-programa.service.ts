@@ -432,7 +432,7 @@ export class LevantarProgramaService {
                         const minutes = parseInt(timeParts[1], 10) || 0;
                         if (tStr && tStr.toUpperCase().includes('PM') && hours < 12) hours += 12;
                         if (tStr && tStr.toUpperCase().includes('AM') && hours === 12) hours = 0;
-                        const d = new Date(year, month, day, hours, minutes);
+                        const d = new Date(Date.UTC(year, month, day, hours, minutes));
                         if (!isNaN(d.getTime())) return d;
                     }
                     const d = new Date(dStr);
@@ -704,11 +704,13 @@ export class LevantarProgramaService {
         if (filter.fechaInicio || filter.fechaFin) {
             where.fechaProgramadaCarga = {};
             if (filter.fechaInicio && filter.fechaInicio.trim()) {
-                const dInicio = new Date(`${filter.fechaInicio.trim()}T00:00:00.000`);
+                const fIni = filter.fechaInicio.trim().split(/[T\s]/)[0];
+                const dInicio = new Date(`${fIni}T00:00:00.000Z`);
                 where.fechaProgramadaCarga.gte = isNaN(dInicio.getTime()) ? new Date(filter.fechaInicio) : dInicio;
             }
             if (filter.fechaFin && filter.fechaFin.trim()) {
-                const dFin = new Date(`${filter.fechaFin.trim()}T23:59:59.999`);
+                const fFin = filter.fechaFin.trim().split(/[T\s]/)[0];
+                const dFin = new Date(`${fFin}T23:59:59.999Z`);
                 where.fechaProgramadaCarga.lte = isNaN(dFin.getTime()) ? new Date(filter.fechaFin) : dFin;
             }
         }
@@ -1271,6 +1273,7 @@ export class LevantarProgramaService {
             idRecargo?: string | null;
             concepto?: string;
             monto: number | string;
+            moneda?: 'Bs' | 'USD';
             observaciones?: string | null;
             estado?: 'Pendiente' | 'Procesado' | 'Rechazado';
         }>,
@@ -1315,6 +1318,7 @@ export class LevantarProgramaService {
                                     concepto: r.concepto.trim(),
                                     tipoCalculo: 'Monto_Fijo',
                                     valor: montoVal,
+                                    moneda: r.moneda === 'Bs' ? 'Bs' : 'USD',
                                 },
                             });
                         }

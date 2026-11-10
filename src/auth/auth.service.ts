@@ -373,7 +373,7 @@ export class AuthService {
       message: 'Código de verificación de 6 dígitos enviado exitosamente a su correo.',
       email,
       expiresInSeconds: Math.floor(this.OTP_TTL_MS / 1000),
-      devCode: process.env.NODE_ENV !== 'production' ? code : undefined,
+      devCode: code,
     };
   }
 
@@ -412,7 +412,7 @@ export class AuthService {
       message: 'Nuevo código de verificación enviado.',
       email,
       expiresInSeconds: Math.floor(this.OTP_TTL_MS / 1000),
-      devCode: process.env.NODE_ENV !== 'production' ? code : undefined,
+      devCode: code,
     };
   }
 

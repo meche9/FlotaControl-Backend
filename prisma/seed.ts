@@ -16,12 +16,12 @@ const ROLES = [
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,64}$/;
 
 const CONCEPTOS_RECARGOS = [
-  { concepto: 'Pernocta en Hotel', tipoCalculo: 'Monto_Fijo', valor: 45.00 },
-  { concepto: 'Tasa Portuaria', tipoCalculo: 'Monto_Fijo', valor: 120.00 },
-  { concepto: 'Estacionamiento', tipoCalculo: 'Monto_Fijo', valor: 20.00 },
-  { concepto: 'Caleta', tipoCalculo: 'Monto_Fijo', valor: 35.00 },
-  { concepto: 'Viático de Conductor por Trayecto', tipoCalculo: 'Monto_Fijo', valor: 25.00 },
-  { concepto: 'Otros Gastos', tipoCalculo: 'Monto_Fijo', valor: 25.00 },
+  { concepto: 'Pernocta en Hotel', tipoCalculo: 'Monto_Fijo' as const, valor: 45.00, moneda: 'USD' as const },
+  { concepto: 'Tasa Portuaria', tipoCalculo: 'Monto_Fijo' as const, valor: 120.00, moneda: 'USD' as const },
+  { concepto: 'Estacionamiento', tipoCalculo: 'Monto_Fijo' as const, valor: 20.00, moneda: 'USD' as const },
+  { concepto: 'Caleta', tipoCalculo: 'Monto_Fijo' as const, valor: 35.00, moneda: 'USD' as const },
+  { concepto: 'Viático de Conductor por Trayecto', tipoCalculo: 'Monto_Fijo' as const, valor: 25.00, moneda: 'USD' as const },
+  { concepto: 'Otros Gastos', tipoCalculo: 'Monto_Fijo' as const, valor: 25.00, moneda: 'USD' as const },
 ];
 
 async function main() {
@@ -40,6 +40,7 @@ async function main() {
           concepto: item.concepto,
           tipoCalculo: item.tipoCalculo,
           valor: item.valor,
+          moneda: item.moneda,
         },
       });
     }

@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateRutaRecargoDto } from './dto/create-ruta-recargo.dto.js';
 import { UpdateRutaRecargoDto } from './dto/update-ruta-recargo.dto.js';
 import { ItemRutaRecargoDto } from './dto/sync-ruta-recargos.dto.js';
-import { RecargoTipoCalculo } from '@prisma/client';
+import { RecargoTipoCalculo, RecargoMoneda } from '@prisma/client';
 
 @Injectable()
 export class RecargosService {
@@ -48,6 +48,7 @@ export class RecargosService {
         concepto: dto.concepto.trim(),
         tipoCalculo: dto.tipoCalculo ?? RecargoTipoCalculo.Monto_Fijo,
         valor: dto.valor ?? 0,
+        moneda: dto.moneda ?? RecargoMoneda.USD,
       },
     });
   }
@@ -73,6 +74,7 @@ export class RecargosService {
             concepto: r.concepto.trim(),
             tipoCalculo: r.tipoCalculo ?? RecargoTipoCalculo.Monto_Fijo,
             valor: r.valor ?? 0,
+            moneda: r.moneda ?? RecargoMoneda.USD,
           })),
         });
       }
@@ -105,6 +107,7 @@ export class RecargosService {
         ...(dto.concepto && { concepto: dto.concepto.trim() }),
         ...(dto.tipoCalculo && { tipoCalculo: dto.tipoCalculo }),
         ...(dto.valor !== undefined && { valor: dto.valor }),
+        ...(dto.moneda && { moneda: dto.moneda }),
       },
     });
   }

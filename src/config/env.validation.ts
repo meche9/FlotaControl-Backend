@@ -58,10 +58,6 @@ export function validateEnv(config: Env): Env {
     errores.push('COOKIE_SAMESITE=none requiere COOKIE_SECURE=true');
   }
 
-  if (isProduction && !asString(config.SMTP_HOST)) {
-    errores.push('SMTP_HOST es requerida en producción para enviar correos de restablecimiento');
-  }
-
   let validado: Env = {};
   try {
     validado = {

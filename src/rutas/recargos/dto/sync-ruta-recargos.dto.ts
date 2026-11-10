@@ -11,8 +11,8 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { RecargoTipoCalculo } from '@prisma/client';
-import { normalizeRecargoTipoCalculo } from './create-ruta-recargo.dto.js';
+import { RecargoTipoCalculo, RecargoMoneda } from '@prisma/client';
+import { normalizeRecargoTipoCalculo, normalizeRecargoMoneda } from './create-ruta-recargo.dto.js';
 
 export class ItemRutaRecargoDto {
   @IsString({ message: 'El concepto del recargo es obligatorio' })
@@ -32,6 +32,13 @@ export class ItemRutaRecargoDto {
   @IsNumber({}, { message: 'El valor debe ser numérico' })
   @Min(0)
   valor?: number = 0;
+
+  @IsOptional()
+  @Transform(normalizeRecargoMoneda)
+  @IsEnum(RecargoMoneda, {
+    message: 'La moneda debe ser válida (Bs o USD)',
+  })
+  moneda?: RecargoMoneda = RecargoMoneda.USD;
 }
 
 export class SyncRutaRecargosDto {

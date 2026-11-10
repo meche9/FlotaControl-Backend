@@ -4,12 +4,12 @@ const { PrismaClient } = prismaPkg;
 const prisma = new PrismaClient();
 
 const CONCEPTOS_RECARGOS = [
-  { concepto: 'Pernocta en Hotel', tipoCalculo: 'Monto_Fijo', valor: 45.00 },
-  { concepto: 'Tasa Portuaria', tipoCalculo: 'Monto_Fijo', valor: 120.00 },
-  { concepto: 'Estacionamiento', tipoCalculo: 'Monto_Fijo', valor: 20.00 },
-  { concepto: 'Caleta', tipoCalculo: 'Monto_Fijo', valor: 35.00 },
-  { concepto: 'Viático de Conductor por Trayecto', tipoCalculo: 'Monto_Fijo', valor: 25.00 },
-  { concepto: 'Otros Gastos', tipoCalculo: 'Monto_Fijo', valor: 25.00 },
+  { concepto: 'Pernocta en Hotel', tipoCalculo: 'Monto_Fijo', valor: 45.00, moneda: 'USD' },
+  { concepto: 'Tasa Portuaria', tipoCalculo: 'Monto_Fijo', valor: 120.00, moneda: 'USD' },
+  { concepto: 'Estacionamiento', tipoCalculo: 'Monto_Fijo', valor: 20.00, moneda: 'USD' },
+  { concepto: 'Caleta', tipoCalculo: 'Monto_Fijo', valor: 35.00, moneda: 'USD' },
+  { concepto: 'Viático de Conductor por Trayecto', tipoCalculo: 'Monto_Fijo', valor: 25.00, moneda: 'USD' },
+  { concepto: 'Otros Gastos', tipoCalculo: 'Monto_Fijo', valor: 25.00, moneda: 'USD' },
 ];
 
 async function seedRecargosGenerales() {
@@ -25,9 +25,10 @@ async function seedRecargosGenerales() {
           concepto: item.concepto,
           tipoCalculo: item.tipoCalculo,
           valor: item.valor,
+          moneda: item.moneda,
         },
       });
-      console.log(`[CREADO] ${created.concepto} - Tipo: ${created.tipoCalculo} - Valor: ${created.valor}`);
+      console.log(`[CREADO] ${created.concepto} - Tipo: ${created.tipoCalculo} - Valor: ${created.valor} ${created.moneda}`);
     } else {
       console.log(`[YA EXISTE] ${item.concepto}`);
     }

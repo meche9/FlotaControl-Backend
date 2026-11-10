@@ -1,6 +1,5 @@
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { IsStrongPassword } from '../../common/validators/password-policy.js';
 
 export class RegisterRequestDto {
   @IsString({ message: 'El nombre completo o razón social debe ser texto' })
@@ -15,8 +14,10 @@ export class RegisterRequestDto {
   @MaxLength(150, { message: 'El correo no puede exceder 150 caracteres' })
   email: string;
 
+  @IsString({ message: 'La contraseña debe ser texto' })
   @IsNotEmpty({ message: 'La contraseña es requerida' })
-  @IsStrongPassword()
+  @MinLength(4, { message: 'La contraseña debe tener al menos 4 caracteres' })
+  @MaxLength(64, { message: 'La contraseña no puede exceder 64 caracteres' })
   password: string;
 
   @IsOptional()

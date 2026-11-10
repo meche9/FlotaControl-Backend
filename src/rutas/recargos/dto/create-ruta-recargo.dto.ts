@@ -9,7 +9,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { RecargoTipoCalculo } from '@prisma/client';
+import { RecargoTipoCalculo, RecargoMoneda } from '@prisma/client';
 
 export const normalizeRecargoTipoCalculo = ({ value }: { value: unknown }): unknown => {
   if (typeof value === 'string') {
@@ -17,6 +17,15 @@ export const normalizeRecargoTipoCalculo = ({ value }: { value: unknown }): unkn
     if (trimmed === 'Monto Fijo' || trimmed === 'Monto_Fijo') return RecargoTipoCalculo.Monto_Fijo;
     if (trimmed === 'Porcentaje') return RecargoTipoCalculo.Porcentaje;
     if (trimmed === 'Por Hora' || trimmed === 'Por_Hora') return RecargoTipoCalculo.Por_Hora;
+  }
+  return value;
+};
+
+export const normalizeRecargoMoneda = ({ value }: { value: unknown }): unknown => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim().toUpperCase();
+    if (trimmed === 'BS' || trimmed === 'BS.' || trimmed === 'VES') return RecargoMoneda.Bs;
+    if (trimmed === 'USD' || trimmed === '$') return RecargoMoneda.USD;
   }
   return value;
 };
@@ -42,4 +51,11 @@ export class CreateRutaRecargoDto {
   @IsNumber({}, { message: 'El valor debe ser un número válido' })
   @Min(0, { message: 'El valor no puede ser negativo' })
   valor: number;
+
+  @IsOptional()
+  @Transform(normalizeRecargoMoneda)
+  @IsEnum(RecargoMoneda, {
+    message: 'La moneda debe ser válida (Bs o USD)',
+  })
+  moneda?: RecargoMoneda = RecargoMoneda.USD;
 }
