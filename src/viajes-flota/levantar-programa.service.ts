@@ -1302,7 +1302,18 @@ export class LevantarProgramaService {
                     let idRecargoToUse = r.idRecargo || null;
                     const montoVal = Number(r.monto) || 0;
 
-                    // Si se suministró concepto y no idRecargo, buscar o vincular en rutas_recargos
+                    // Verificar si idRecargoToUse existe en rutas_recargos (ya que puede provenir de recargos_generales)
+                    if (idRecargoToUse) {
+                        const existeEnRuta = await tx.rutaRecargo.findUnique({
+                            where: { idRecargo: idRecargoToUse },
+                            select: { idRecargo: true },
+                        });
+                        if (!existeEnRuta) {
+                            idRecargoToUse = null;
+                        }
+                    }
+
+                    // Si se suministró concepto y no existe aún en rutas_recargos, buscar o vincular en rutas_recargos
                     if (!idRecargoToUse && r.concepto && r.concepto.trim() && viaje.idRuta) {
                         let rutaRec = await tx.rutaRecargo.findFirst({
                             where: {
