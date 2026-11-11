@@ -933,6 +933,33 @@ export class LevantarProgramaService {
     }
 
     /**
+     * Actualiza el campo monto_anticipo_conductor de una orden de viaje en guias_viajes.
+     */
+    async actualizarAnticipo(idOrden: string, montoAnticipoConductor: number | string, _moneda?: string) {
+        if (!idOrden) {
+            throw new HttpException('idOrden es requerido', HttpStatus.BAD_REQUEST);
+        }
+
+        const guia = await this.prisma.guiaViaje.findUnique({
+            where: { idOrden },
+            select: { idOrden: true },
+        });
+
+        if (!guia) {
+            throw new HttpException(`La orden de viaje con ID '${idOrden}' no existe.`, HttpStatus.NOT_FOUND);
+        }
+
+        const montoNum = Math.max(0, Number(montoAnticipoConductor) || 0);
+
+        return await this.prisma.guiaViaje.update({
+            where: { idOrden },
+            data: {
+                montoAnticipoConductor: montoNum,
+            },
+        });
+    }
+
+    /**
      * Asigna o actualiza recursos (vehículo motriz / chuto, acoplado / batea, conductor) a un viaje.
      */
     async asignarRecursos(body: {

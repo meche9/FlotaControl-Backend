@@ -156,6 +156,17 @@ export class LevantarProgramaController {
         return await this.levantarProgramaService.actualizarFisico(body.idOrden, body.fisico);
     }
 
+    @Patch('actualizar-anticipo')
+    async actualizarAnticipo(
+        @Body() body: { idOrden: string; montoAnticipoConductor: number | string; moneda?: string },
+    ) {
+        return await this.levantarProgramaService.actualizarAnticipo(
+            body.idOrden,
+            body.montoAnticipoConductor,
+            body.moneda,
+        );
+    }
+
     @Patch('cancelar-viaje')
     async cancelarViaje(@Body() body: { idOrden: string; observacion?: string }) {
         return await this.levantarProgramaService.cancelarViaje(body.idOrden, body.observacion);
