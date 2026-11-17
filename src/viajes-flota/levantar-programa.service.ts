@@ -631,6 +631,7 @@ export class LevantarProgramaService {
                     moneda: 'USD',
                     montoFleteCliente: rutaInfo.tarifa,
                     montoAnticipoConductor: 0.0,
+                    montoGasoil: 0.0,
                     estadoFacturacion: 'Sin_Facturar',
                     estadoOrden: 'Programado',
                     fisico: Boolean(trip.fisico ?? false),
@@ -648,6 +649,7 @@ export class LevantarProgramaService {
                     estadoOrden: true,
                     estadoFacturacion: true,
                     montoFleteCliente: true,
+                    montoGasoil: true,
                     fechaProgramadaCarga: true,
                     observaciones: true,
                     fisico: true,
@@ -933,9 +935,14 @@ export class LevantarProgramaService {
     }
 
     /**
-     * Actualiza el campo monto_anticipo_conductor de una orden de viaje en guias_viajes.
+     * Actualiza los campos monto_anticipo_conductor y (opcionalmente) monto_gasoil de una orden de viaje en guias_viajes.
      */
-    async actualizarAnticipo(idOrden: string, montoAnticipoConductor: number | string, _moneda?: string) {
+    async actualizarAnticipo(
+        idOrden: string,
+        montoAnticipoConductor: number | string,
+        _moneda?: string,
+        montoGasoil?: number | string,
+    ) {
         if (!idOrden) {
             throw new HttpException('idOrden es requerido', HttpStatus.BAD_REQUEST);
         }
@@ -950,12 +957,16 @@ export class LevantarProgramaService {
         }
 
         const montoNum = Math.max(0, Number(montoAnticipoConductor) || 0);
+        const data: { montoAnticipoConductor: number; montoGasoil?: number } = {
+            montoAnticipoConductor: montoNum,
+        };
+        if (montoGasoil !== undefined) {
+            data.montoGasoil = Math.max(0, Number(montoGasoil) || 0);
+        }
 
         return await this.prisma.guiaViaje.update({
             where: { idOrden },
-            data: {
-                montoAnticipoConductor: montoNum,
-            },
+            data,
         });
     }
 
@@ -1151,6 +1162,7 @@ export class LevantarProgramaService {
                 moneda: 'USD',
                 montoFleteCliente: montoFleteFinal,
                 montoAnticipoConductor: 0,
+                montoGasoil: 0,
                 estadoFacturacion: 'Sin_Facturar',
                 estadoOrden: 'Programado',
                 fisico: false,

@@ -158,12 +158,13 @@ export class LevantarProgramaController {
 
     @Patch('actualizar-anticipo')
     async actualizarAnticipo(
-        @Body() body: { idOrden: string; montoAnticipoConductor: number | string; moneda?: string },
+        @Body() body: { idOrden: string; montoAnticipoConductor: number | string; moneda?: string; montoGasoil?: number | string },
     ) {
         return await this.levantarProgramaService.actualizarAnticipo(
             body.idOrden,
             body.montoAnticipoConductor,
             body.moneda,
+            body.montoGasoil,
         );
     }
 
