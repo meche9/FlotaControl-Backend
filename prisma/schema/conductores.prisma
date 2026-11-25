@@ -65,8 +65,10 @@ model Conductor {
   fechaCreacion      DateTime @default(now()) @map("fecha_creacion")
   fechaActualizacion DateTime @default(now()) @updatedAt @map("fecha_actualizacion")
 
-  documentosConductores DocumentoConductor[]
-  guiasViajes           GuiaViaje[]
+  documentosConductores  DocumentoConductor[]
+  guiasViajes            GuiaViaje[]
+  nominasCalculos        NominaCalculo[]
+  nominasCalculoDetalles NominaCalculoDetalle[]
 
   @@map("conductores")
 }

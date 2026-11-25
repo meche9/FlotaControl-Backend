@@ -1,0 +1,23 @@
+enum NominaModalidad {
+  diaria
+  semanal
+  por_viaje
+  quincenal
+  mensual
+}
+
+model Nomina {
+  idCodnomina String          @id @map("id_codnomina") @db.Char(2)
+  modalidad   NominaModalidad
+  descripcion String?         @db.VarChar(255)
+  activo      Boolean         @default(true)
+  createAt    DateTime        @default(now()) @map("create_at") @db.Timestamp(0)
+  updateAt    DateTime        @default(now()) @updatedAt @map("update_at") @db.Timestamp(0)
+
+  procesos    NominaProceso[]
+  deducciones NominaDeduccion[]
+
+  @@index([modalidad], map: "idx_nominas_modalidad")
+  @@index([activo], map: "idx_nominas_activo")
+  @@map("nominas")
+}

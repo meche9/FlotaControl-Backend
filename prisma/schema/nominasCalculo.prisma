@@ -1,0 +1,30 @@
+enum NominaCalculoEstado {
+  borrador
+  aprobado
+  pagado
+}
+
+model NominaCalculo {
+  idNominacalculo   String              @id @default(uuid()) @map("id_nominacalculo") @db.VarChar(36)
+  idProcesonomina   String              @map("id_procesonomina") @db.VarChar(36)
+  idConductor       String              @map("id_conductor") @db.VarChar(36)
+  salarioBase       Decimal             @default(0.00) @map("salario_base") @db.Decimal(12, 2)
+  totalViajes       Decimal             @default(0.00) @map("total_viajes") @db.Decimal(12, 2)
+  totalFletes       Decimal             @default(0.00) @map("total_fletes") @db.Decimal(12, 2)
+  totalAsignaciones Decimal             @default(0.00) @map("total_asignaciones") @db.Decimal(12, 2)
+  totalDeducciones  Decimal             @default(0.00) @map("total_deducciones") @db.Decimal(12, 2)
+  estado            NominaCalculoEstado @default(borrador)
+  fechaPago         DateTime?           @map("fecha_pago") @db.DateTime(0)
+  observaciones     String?             @db.Text
+  createAt          DateTime            @default(now()) @map("create_at") @db.Timestamp(0)
+  updateAt          DateTime            @default(now()) @updatedAt @map("update_at") @db.Timestamp(0)
+
+  proceso   NominaProceso          @relation(fields: [idProcesonomina], references: [idProcesonomina], onUpdate: Cascade, onDelete: Cascade, map: "fk_nominacalculo_proceso")
+  conductor Conductor              @relation(fields: [idConductor], references: [idConductor], onUpdate: Cascade, onDelete: Restrict, map: "fk_nominacalculo_conductor")
+  detalles  NominaCalculoDetalle[]
+
+  @@unique([idProcesonomina, idConductor], map: "uq_proceso_conductor")
+  @@index([estado], map: "idx_nominacalculo_estado")
+  @@index([idConductor], map: "idx_nominacalculo_conductor")
+  @@map("nominas_calculo")
+}

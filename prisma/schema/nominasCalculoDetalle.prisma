@@ -1,0 +1,20 @@
+model NominaCalculoDetalle {
+  idCodnominadetalle String   @id @default(uuid()) @map("id_codnominadetalle") @db.VarChar(36)
+  idProcesonomina    String   @map("id_procesonomina") @db.VarChar(36)
+  idConductor        String   @map("id_conductor") @db.VarChar(36)
+  tipoConcepto       Boolean  @default(true) @map("tipo_concepto")
+  codigoConcepto     String   @map("codigo_concepto") @db.VarChar(36)
+  monto              Decimal  @default(0.00) @db.Decimal(12, 2)
+  moneda             String   @default("USD") @db.VarChar(10)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  calculo   NominaCalculo @relation(fields: [idProcesonomina, idConductor], references: [idProcesonomina, idConductor], onUpdate: Cascade, onDelete: Cascade, map: "fk_calculodetalle_nominas_calculo")
+  conductor Conductor     @relation(fields: [idConductor], references: [idConductor], onUpdate: Cascade, onDelete: Restrict, map: "fk_calculodetalle_conductor")
+
+  @@index([idProcesonomina], map: "idx_calculodetalle_proceso")
+  @@index([idConductor], map: "idx_calculodetalle_conductor")
+  @@index([idProcesonomina, idConductor], map: "idx_calculodetalle_proceso_conductor")
+  @@index([idProcesonomina, idConductor, tipoConcepto], map: "idx_calculodetalle_tipo")
+  @@map("nominas_calculodetalle")
+}

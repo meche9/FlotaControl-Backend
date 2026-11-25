@@ -1,0 +1,22 @@
+enum NominaDeduccionTipoCalculo {
+  monto_fijo
+  porcentaje
+}
+
+model NominaDeduccion {
+  idDeducciones String                     @id @default(uuid()) @map("id_deducciones") @db.VarChar(36)
+  idNomina      String                     @map("id_nomina") @db.Char(2)
+  descripcion   String                     @db.VarChar(255)
+  tipocalculo   NominaDeduccionTipoCalculo
+  valor         Decimal                    @default(0.0000) @db.Decimal(12, 4)
+  moneda        String                     @default("Bs") @db.VarChar(10)
+  activo        Boolean                    @default(true)
+  createdAt     DateTime                   @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  nomina Nomina @relation(fields: [idNomina], references: [idCodnomina], onUpdate: Cascade, onDelete: Restrict, map: "fk_nominas_deducciones_nomina")
+
+  @@index([idNomina], map: "idx_nominas_deducciones_nomina")
+  @@index([tipocalculo], map: "idx_nominas_deducciones_tipo")
+  @@map("nominas_deducciones")
+}

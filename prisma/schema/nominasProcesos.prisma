@@ -1,0 +1,17 @@
+model NominaProceso {
+  idProcesonomina  String    @id @default(uuid()) @map("id_procesonomina") @db.VarChar(36)
+  idCodnomina      String    @map("id_codnomina") @db.Char(2)
+  codProcesonomina String    @unique(map: "cod_procesonomina") @map("cod_procesonomina") @db.VarChar(9)
+  fechaInicioP     DateTime  @map("fecha_InicioP") @db.Date
+  fechaFinP        DateTime  @map("fecha_FinP") @db.Date
+  fechaCierreP     DateTime? @map("fecha_CierreP") @db.DateTime(0)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updateAt         DateTime  @default(now()) @updatedAt @map("update_at") @db.Timestamp(0)
+
+  nomina   Nomina          @relation(fields: [idCodnomina], references: [idCodnomina], onUpdate: Cascade, onDelete: Restrict, map: "fk_procesonomina_nominas")
+  calculos NominaCalculo[]
+
+  @@index([idCodnomina, fechaInicioP, fechaFinP], map: "idx_proceso_tipo_fechas")
+  @@index([fechaCierreP], map: "idx_proceso_cierre")
+  @@map("nominas_procesos")
+}
