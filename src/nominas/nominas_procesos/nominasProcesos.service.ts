@@ -162,6 +162,29 @@ export class NominasProcesosService {
         });
     }
 
+    // 2b. Listar deducciones activas (tabla nominas_deducciones)
+    async listarDeducciones(idNomina?: string) {
+        return await this.prisma.nominaDeduccion.findMany({
+            where: {
+                activo: true,
+                ...(idNomina ? { idNomina: idNomina.trim().toUpperCase() } : {}),
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+
+    // 2c. Obtener última tasa de cambio BCV registrada (tabla tasas_cambio_bcv)
+    async obtenerUltimaTasaCambio() {
+        const ultima = await this.prisma.tasaCambioBcv.findFirst({
+            where: { monedaOrigen: 'USD' },
+            orderBy: [{ fechaValor: 'desc' }, { createdAt: 'desc' }],
+        });
+        return {
+            tasa: ultima?.tasa ? Number(ultima.tasa.toString()) : 36.42,
+            fechaTasa: ultima?.fechaValor ?? null,
+        };
+    }
+
     // 3. Listar procesos con filtros opcionales
     async findAll(options?: { idCodnomina?: string; soloAbiertos?: boolean }) {
         const where: Prisma.NominaProcesoWhereInput = {};

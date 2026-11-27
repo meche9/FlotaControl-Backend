@@ -214,6 +214,11 @@ export class RutasService {
             direccion: true,
           },
         },
+        rutaPeajes: {
+          where: { activo: true },
+          orderBy: { orden: 'asc' },
+        },
+        rutaRecargos: true,
         _count: {
           select: {
             guiasViajes: true,

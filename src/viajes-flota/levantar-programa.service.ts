@@ -94,8 +94,8 @@ export class LevantarProgramaService {
             }
         }
 
-        // 3. Obtener puntos de carga/descarga y conductores registrados en el sistema
-        const [puntosBd, conductoresBd] = await Promise.all([
+        // 3. Obtener puntos de carga/descarga, conductores y rutas registrados en el sistema
+        const [puntosBd, conductoresBd, rutasBd] = await Promise.all([
             this.prisma.puntoCargaDescarga.findMany({
                 where: { activo: true },
                 select: {
@@ -133,6 +133,17 @@ export class LevantarProgramaService {
                     },
                 },
             }),
+            this.prisma.ruta.findMany({
+                where: { activo: true },
+                select: {
+                    idRuta: true,
+                    nombreRuta: true,
+                    idPuntoOrigen: true,
+                    idPuntoDestino: true,
+                    montoTarifa: true,
+                    distanciaKm: true,
+                },
+            }),
         ]);
 
         const puntosPorCodigo = new Map<string, (typeof puntosBd)[0]>();
@@ -143,6 +154,16 @@ export class LevantarProgramaService {
             }
             if (p.nombreSede) {
                 puntosPorNombre.set(p.nombreSede.trim().toUpperCase(), p);
+            }
+        }
+
+        const rutasPorPar = new Map<string, (typeof rutasBd)[0]>();
+        for (const r of rutasBd) {
+            if (r.idPuntoOrigen && r.idPuntoDestino) {
+                const key = `${r.idPuntoOrigen}_${r.idPuntoDestino}`;
+                if (!rutasPorPar.has(key)) {
+                    rutasPorPar.set(key, r);
+                }
             }
         }
 
@@ -195,9 +216,19 @@ export class LevantarProgramaService {
             const nroDigitos = nroGuia.replace(/[^0-9]/g, '').slice(-4) || String(9000 + index);
             const nroRetornoSugerido = `RET-${nroDigitos}-A`;
 
+            // Verificar si existe la ruta en la tabla rutas
+            const rutaEncontrada =
+                puntoOrigenBd?.idPunto && puntoDestinoBd?.idPunto
+                    ? rutasPorPar.get(`${puntoOrigenBd.idPunto}_${puntoDestinoBd.idPunto}`)
+                    : null;
+            const sinRuta = !rutaEncontrada;
+
             return {
                 id: `trip-${randomUUID()}`,
                 nroTransporte: nroGuia,
+                idRuta: rutaEncontrada ? rutaEncontrada.idRuta : null,
+                nombreRuta: rutaEncontrada ? rutaEncontrada.nombreRuta : null,
+                sinRuta,
                 origenSalida: {
                     codigo: (trip.cod_origen || '').trim() || (puntoOrigenBd ? puntoOrigenBd.codigoPuntoc : 'S/C'),
                     nombre: trip.punto_origen || (puntoOrigenBd ? puntoOrigenBd.nombreSede : 'Origen'),
@@ -303,12 +334,14 @@ export class LevantarProgramaService {
         });
 
         const colisionesCount = formattedTrips.filter((t: any) => t.yaExiste).length;
-        const nuevosCount = formattedTrips.length - colisionesCount;
+        const sinRutaCount = formattedTrips.filter((t: any) => t.sinRuta).length;
+        const nuevosCount = formattedTrips.filter((t: any) => !t.yaExiste && !t.sinRuta).length;
 
         return {
             nombreArchivo: file.originalname,
             totalViajes: formattedTrips.length,
             colisiones: colisionesCount,
+            sinRuta: sinRutaCount,
             nuevos: nuevosCount,
             todosExisten: formattedTrips.length > 0 && colisionesCount === formattedTrips.length,
             clienteDetectado,
@@ -383,16 +416,15 @@ export class LevantarProgramaService {
             };
         }
 
-        // 2. Obtener cliente y puntos por defecto si no están asignados
+        // 2. Obtener cliente por defecto si no está asignado
         const payloadIdCliente = payload?.idCliente || payload?.clienteDetectado?.idCliente;
 
-        const [primerCliente, primerPunto, primerRuta] = await Promise.all([
+        const [primerCliente, primerPunto] = await Promise.all([
             this.prisma.cliente.findFirst({
                 orderBy: { fechaCreacion: 'asc' },
                 select: { idCliente: true, razonSocial: true },
             }),
             this.prisma.puntoCargaDescarga.findFirst({ select: { idPunto: true, idCliente: true } }),
-            this.prisma.ruta.findFirst({ select: { idRuta: true, montoTarifa: true } }),
         ]);
 
         const idClienteFallback = payloadIdCliente || primerPunto?.idCliente || primerCliente?.idCliente;
@@ -405,10 +437,11 @@ export class LevantarProgramaService {
 
         // Cache local para puntos y rutas durante este lote de inserción
         const puntosMap = new Map<string, string>();
-        const rutasMap = new Map<string, { idRuta: string; tarifa: number }>();
+        const rutasMap = new Map<string, { idRuta: string; tarifa: number } | null>();
 
         // 3. Insertar viajes válidos
         const creados: any[] = [];
+        const viajesSinRuta: Array<{ nroTransporte: string; origen: string; destino: string }> = [];
 
         for (const trip of tripsToInsert) {
             // Resolver fechas de forma segura
@@ -451,7 +484,7 @@ export class LevantarProgramaService {
 
             const idCliente = trip.origenSalida?.idCliente || idClienteFallback;
 
-            // Resolver o crear punto de origen
+            // Resolver punto de origen (SOLO si existe en puntos_carga_descarga)
             let idPuntoOrigen = trip.origenSalida?.idPunto;
             const codOrigen = (trip.origenSalida?.codigo || '').trim();
             const nomOrigen = (trip.origenSalida?.nombre || '').trim();
@@ -461,7 +494,7 @@ export class LevantarProgramaService {
                 if (puntosMap.has(cacheKey)) {
                     idPuntoOrigen = puntosMap.get(cacheKey)!;
                 } else {
-                    let pEncontrado = await this.prisma.puntoCargaDescarga.findFirst({
+                    const pEncontrado = await this.prisma.puntoCargaDescarga.findFirst({
                         where: {
                             OR: [
                                 ...(codOrigen ? [{ codigoPuntoc: codOrigen }] : []),
@@ -471,30 +504,14 @@ export class LevantarProgramaService {
                         select: { idPunto: true },
                     });
 
-                    if (!pEncontrado) {
-                        pEncontrado = await this.prisma.puntoCargaDescarga.create({
-                            data: {
-                                idCliente,
-                                codigoPuntoc: codOrigen.slice(0, 10) || 'S/C',
-                                nombreSede: nomOrigen.slice(0, 100) || 'Planta Origen',
-                                direccion: 'Registrado desde Manifiesto',
-                                ciudad: 'Por Definir',
-                                estado: 'Por Definir',
-                                tipoPunto: 'Origen',
-                                activo: true,
-                            },
-                            select: { idPunto: true },
-                        });
+                    if (pEncontrado) {
+                        idPuntoOrigen = pEncontrado.idPunto;
+                        puntosMap.set(cacheKey, idPuntoOrigen);
                     }
-                    idPuntoOrigen = pEncontrado.idPunto;
-                    puntosMap.set(cacheKey, idPuntoOrigen);
                 }
             }
-            if (!idPuntoOrigen) {
-                idPuntoOrigen = primerPunto?.idPunto;
-            }
 
-            // Resolver o crear punto de destino
+            // Resolver punto de destino (SOLO si existe en puntos_carga_descarga)
             let idPuntoDestino = trip.destinoLlegada?.idPunto;
             const codDestino = (trip.destinoLlegada?.codigo || '').trim();
             const nomDestino = (trip.destinoLlegada?.nombre || '').trim();
@@ -504,7 +521,7 @@ export class LevantarProgramaService {
                 if (puntosMap.has(cacheKey)) {
                     idPuntoDestino = puntosMap.get(cacheKey)!;
                 } else {
-                    let pEncontrado = await this.prisma.puntoCargaDescarga.findFirst({
+                    const pEncontrado = await this.prisma.puntoCargaDescarga.findFirst({
                         where: {
                             OR: [
                                 ...(codDestino ? [{ codigoPuntoc: codDestino }] : []),
@@ -514,73 +531,58 @@ export class LevantarProgramaService {
                         select: { idPunto: true },
                     });
 
-                    if (!pEncontrado) {
-                        pEncontrado = await this.prisma.puntoCargaDescarga.create({
-                            data: {
-                                idCliente,
-                                codigoPuntoc: codDestino.slice(0, 10) || 'S/C',
-                                nombreSede: nomDestino.slice(0, 100) || 'Sede Destino',
-                                direccion: 'Destino registrado desde Manifiesto',
-                                ciudad: 'Por Definir',
-                                estado: 'Por Definir',
-                                tipoPunto: 'Destino',
-                                activo: true,
-                            },
-                            select: { idPunto: true },
-                        });
+                    if (pEncontrado) {
+                        idPuntoDestino = pEncontrado.idPunto;
+                        puntosMap.set(cacheKey, idPuntoDestino);
                     }
-                    idPuntoDestino = pEncontrado.idPunto;
-                    puntosMap.set(cacheKey, idPuntoDestino);
                 }
             }
-            if (!idPuntoDestino) {
-                idPuntoDestino = primerPunto?.idPunto;
+
+            const etiquetaOrigen = codOrigen && codOrigen !== 'S/C' ? `[${codOrigen}] ${nomOrigen || 'Origen'}` : (nomOrigen || 'Origen');
+            const etiquetaDestino = codDestino && codDestino !== 'S/C' ? `[${codDestino}] ${nomDestino || 'Destino'}` : (nomDestino || 'Destino');
+
+            if (!idPuntoOrigen || !idPuntoDestino) {
+                viajesSinRuta.push({
+                    nroTransporte: (trip.nroTransporte || 'S/N').trim(),
+                    origen: etiquetaOrigen,
+                    destino: etiquetaDestino,
+                });
+                continue;
             }
 
-            // Resolver o crear ruta que conecte origen y destino
-            const rutaKey = `${idPuntoOrigen}_${idPuntoDestino}_${idCliente}`;
+            // Verificar que exista la ruta en la tabla rutas que conecte origen y destino
+            const rutaKey = `${idPuntoOrigen}_${idPuntoDestino}`;
             let rutaInfo = rutasMap.get(rutaKey);
 
-            if (!rutaInfo) {
-                let rutaBd = await this.prisma.ruta.findFirst({
+            if (rutaInfo === undefined) {
+                const rutaBd = await this.prisma.ruta.findFirst({
                     where: {
                         idPuntoOrigen,
                         idPuntoDestino,
+                        activo: true,
                     },
                     select: { idRuta: true, montoTarifa: true },
                 });
 
-                if (!rutaBd) {
-                    rutaBd = await this.prisma.ruta.findFirst({
-                        where: { idCliente },
-                        select: { idRuta: true, montoTarifa: true },
-                    });
+                if (rutaBd) {
+                    rutaInfo = {
+                        idRuta: rutaBd.idRuta,
+                        tarifa: Number(rutaBd.montoTarifa || 0.0),
+                    };
+                } else {
+                    rutaInfo = null;
                 }
-
-                if (!rutaBd) {
-                    rutaBd = await this.prisma.ruta.create({
-                        data: {
-                            idCliente,
-                            nombreRuta: `Ruta: ${nomOrigen || 'Origen'} — ${nomDestino || 'Destino'}`.slice(0, 150),
-                            ciudadOrigen: nomOrigen || 'Origen',
-                            ciudadDestino: nomDestino || 'Destino',
-                            idPuntoOrigen,
-                            idPuntoDestino,
-                            distanciaKm: 150.0,
-                            montoTarifa: 0.0,
-                            tipoCobro: 'Por_Viaje_Fijo',
-                            moneda: 'USD',
-                            activo: true,
-                        },
-                        select: { idRuta: true, montoTarifa: true },
-                    });
-                }
-
-                rutaInfo = {
-                    idRuta: rutaBd?.idRuta || primerRuta!.idRuta,
-                    tarifa: Number(rutaBd?.montoTarifa || primerRuta?.montoTarifa || 0.0),
-                };
                 rutasMap.set(rutaKey, rutaInfo);
+            }
+
+            // Si la ruta no existe en la tabla rutas, NO permitir registrar este viaje
+            if (!rutaInfo) {
+                viajesSinRuta.push({
+                    nroTransporte: (trip.nroTransporte || 'S/N').trim(),
+                    origen: etiquetaOrigen,
+                    destino: etiquetaDestino,
+                });
+                continue;
             }
 
             // Resolver vehículos si el conductor tiene asignación habitual
@@ -659,11 +661,29 @@ export class LevantarProgramaService {
             creados.push(guiaCreada);
         }
 
+        if (creados.length === 0 && viajesSinRuta.length > 0) {
+            const detalle = viajesSinRuta
+                .slice(0, 3)
+                .map((v) => `${v.nroTransporte} (${v.origen} → ${v.destino})`)
+                .join(', ');
+            throw new HttpException(
+                `No se puede registrar el viaje porque la ruta no existe en la tabla rutas. Debe crear primero la ruta: ${detalle}${viajesSinRuta.length > 3 ? ` y ${viajesSinRuta.length - 3} más` : ''}.`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        const msgSinRuta =
+            viajesSinRuta.length > 0
+                ? ` Se omitieron ${viajesSinRuta.length} viaje(s) por no tener ruta creada en la tabla rutas.`
+                : '';
+
         return {
-            success: true,
-            message: `Se han guardado ${creados.length} viajes en la tabla guias_viajes correctamente.`,
+            success: creados.length > 0,
+            message: `Se han guardado ${creados.length} viajes en la tabla guias_viajes correctamente.${msgSinRuta}`,
             guardados: creados.length,
-            omitidosPorColision: rawTrips.length - creados.length,
+            omitidosPorColision: rawTrips.length - tripsToInsert.length,
+            omitidosSinRuta: viajesSinRuta.length,
+            viajesSinRuta,
             guias: creados,
         };
     }
@@ -733,6 +753,10 @@ export class LevantarProgramaService {
                 ruta: {
                     include: {
                         rutaRecargos: true,
+                        rutaPeajes: {
+                            where: { activo: true },
+                            orderBy: { orden: 'asc' },
+                        },
                     },
                 },
                 conductor: {
@@ -1113,22 +1137,13 @@ export class LevantarProgramaService {
         if (!rutaRetorno) {
             const pOrig = await this.prisma.puntoCargaDescarga.findUnique({ where: { idPunto: origenRetorno } });
             const pDest = await this.prisma.puntoCargaDescarga.findUnique({ where: { idPunto: destinoRetorno } });
+            const origNombre = pOrig ? `[${pOrig.codigoPuntoc || 'S/C'}] ${pOrig.nombreSede}` : 'Origen';
+            const destNombre = pDest ? `[${pDest.codigoPuntoc || 'S/C'}] ${pDest.nombreSede}` : 'Destino';
 
-            rutaRetorno = await this.prisma.ruta.create({
-                data: {
-                    idCliente: guiaOriginal.idCliente,
-                    nombreRuta: `Retorno: ${pOrig?.nombreSede || 'Origen'} — ${pDest?.nombreSede || 'Destino'}`.slice(0, 150),
-                    ciudadOrigen: pOrig?.ciudad || 'Origen',
-                    ciudadDestino: pDest?.ciudad || 'Destino',
-                    idPuntoOrigen: origenRetorno,
-                    idPuntoDestino: destinoRetorno,
-                    distanciaKm: 150.0,
-                    montoTarifa: montoFleteFinal,
-                    tipoCobro: 'Por_Viaje_Fijo',
-                    moneda: 'USD',
-                    activo: true,
-                },
-            });
+            throw new HttpException(
+                `La ruta entre ${destNombre} y ${origNombre} no existe en la tabla rutas. Debe crear primero esa ruta antes de registrar este viaje de retorno.`,
+                HttpStatus.BAD_REQUEST,
+            );
         }
 
         // Tomar exactamente la misma fecha_programada_carga del viaje inicial para todos los campos de fecha de la plancha
@@ -1251,7 +1266,19 @@ export class LevantarProgramaService {
                 ? Number(montoFlete)
                 : tarifaSegunRuta;
 
-        const idRutaFinal = rutaRetorno ? rutaRetorno.idRuta : guiaPlancha.idRuta;
+        if (!rutaRetorno) {
+            const pOrig = await this.prisma.puntoCargaDescarga.findUnique({ where: { idPunto: origenRetorno } });
+            const pDest = await this.prisma.puntoCargaDescarga.findUnique({ where: { idPunto: destinoRetorno } });
+            const origNombre = pOrig ? `[${pOrig.codigoPuntoc || 'S/C'}] ${pOrig.nombreSede}` : 'Origen';
+            const destNombre = pDest ? `[${pDest.codigoPuntoc || 'S/C'}] ${pDest.nombreSede}` : 'Destino';
+
+            throw new HttpException(
+                `La ruta entre ${destNombre} y ${origNombre} no existe en la tabla rutas. Debe crear primero esa ruta antes de registrar este viaje.`,
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        const idRutaFinal = rutaRetorno.idRuta;
 
         // Preservar la etiqueta [RETORNO_DE:...] del viaje padre en las observaciones
         const matchTag = (guiaPlancha.observaciones || '').match(/^(\[RETORNO_DE:[^\]]+\])/);

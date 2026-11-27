@@ -1,0 +1,14 @@
+model TasaCambioBcv {
+  idTasa        String   @id @default(uuid()) @map("id_tasa") @db.VarChar(36)
+  fechaValor    DateTime @map("fecha_valor") @db.Date
+  monedaOrigen  String   @default("USD") @map("moneda_origen") @db.VarChar(10)
+  monedaDestino String   @default("VES") @map("moneda_destino") @db.VarChar(10)
+  tasa          Decimal  @db.Decimal(18, 6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  @@unique([fechaValor, monedaOrigen, monedaDestino], map: "uq_fecha_monedas")
+  @@index([fechaValor], map: "idx_tasas_fecha")
+  @@index([monedaOrigen, fechaValor], map: "idx_tasas_moneda_fecha")
+  @@map("tasas_cambio_bcv")
+}

@@ -28,6 +28,16 @@ export class NominasProcesosController {
         return await this.nominasProcesosService.listarTiposNomina();
     }
 
+    @Get('deducciones')
+    async listarDeducciones(@Query('idNomina') idNomina?: string) {
+        return await this.nominasProcesosService.listarDeducciones(idNomina);
+    }
+
+    @Get('tasa-bcv')
+    async obtenerTasaBcv() {
+        return await this.nominasProcesosService.obtenerUltimaTasaCambio();
+    }
+
     @Get()
     async findAll(
         @Query('idCodnomina') idCodnomina?: string,
